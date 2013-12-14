@@ -34,12 +34,12 @@ func (t *Tunnel) Serve() {
 	for {
 		n, err := t.connection.Read(buffer)
 		if err != nil {
-			fmt.Printf("Error reading from %v: %v", t.connection.RemoteAddr(), err)
+			fmt.Printf("Error reading from %v: %v\n", t.connection.RemoteAddr(), err)
 			break
 		}
 
 		msg := buffer[0:n]
-		fmt.Printf("Recieved data from %v: %v", t.connection.RemoteAddr(), string(msg))
+		fmt.Printf("Recieved data from %v: %v\n", t.connection.RemoteAddr(), string(msg))
 	}
 
 	fmt.Printf("Closing tunnel from %v")
