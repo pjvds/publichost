@@ -43,7 +43,8 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("Accepted connection from %v", connection.RemoteAddr())
+		fmt.Printf("Accepted connection from %v to %v:%v\n", connection.RemoteAddr(), connection.LocalAddr().Network(), connection.LocalAddr().String())
+
 		accepted <- connection
 	}
 }
