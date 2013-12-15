@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestReadRequest(t *testing.T) {
+func TestReadRequestSetsHeaderEntry(t *testing.T) {
 	key := "MyKey"
 	value := "MyValue"
 
