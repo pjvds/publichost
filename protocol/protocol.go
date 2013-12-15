@@ -8,14 +8,20 @@ import (
 	"strings"
 )
 
-type Request struct {
-	Header map[string]string
-	Body   io.Reader
+type Message struct {
+	Header  map[string]string
+	Payload io.Reader
 }
 
-// Read a request from the reader.
-func ReadRequest(reader io.Reader) (*Request, error) {
-	request := &Request{
+func NewMessage() *Message {
+	return &Message{
+		Header: make(map[string]string),
+	}
+}
+
+// Read a message from the reader.
+func ReadMessage(reader io.Reader) (*Message, error) {
+	message := &Message{
 		Header: make(map[string]string),
 	}
 
@@ -34,7 +40,7 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 		key := data[0]
 		value := data[1]
 
-		request.Header[key] = value
+		message.Header[key] = value
 	}
 
 	// Check if the scanner didn't had problems
@@ -43,27 +49,27 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 		return nil, err
 	}
 
-	// Get content length from the request header.
-	contentLength, err := getContentLength(request)
+	// Get content length from the message header.
+	contentLength, err := getContentLength(message)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: What if we close this reader?
-	request.Body = io.LimitReader(reader, int64(contentLength))
+	message.Payload = io.LimitReader(reader, int64(contentLength))
 
-	return request, nil
+	return message, nil
 }
 
-// Determine if the given line marks the end of the header section of a request.
+// Determine if the given line marks the end of the header section of a message.
 func IsEndOfHeader(line string) bool {
 	return len(line) == 0
 }
 
-// Get the content length in bytes from the request header. If the header
+// Get the content length in bytes from the message header. If the header
 // is not present the a content length of zero is returned and no error.
-func getContentLength(request *Request) (int, error) {
-	contentLength, ok := request.Header["ContentLength"]
+func getContentLength(message *Message) (int, error) {
+	contentLength, ok := message.Header["ContentLength"]
 	if !ok {
 		return 0, nil
 	}

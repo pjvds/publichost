@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"github.com/pjvds/publichost/protocol"
+	"io"
 	"net"
 	"net/http"
+	"strconv"
 )
 
 var (
@@ -24,7 +28,45 @@ func NewTunnel(host *TunnelServiceHost, connection net.Conn) *Tunnel {
 }
 
 func (t *Tunnel) HandleHttp(response http.ResponseWriter, request *http.Request) {
-	response.WriteHeader(http.StatusTeapot)
+	var buffer bytes.Buffer
+	request.Write(&buffer)
+
+	message := protocol.NewMessage()
+	message.Header["ContentLength"] = strconv.Itoa(buffer.Len())
+	message.Payload = &buffer
+
+	t.send(message)
+	hijacker, ok := response.(http.Hijacker)
+	if !ok {
+		panic("Response does not support hijacking")
+	}
+	connection, readWriter, err := hijacker.Hijack()
+	if err != nil {
+		panic("Hijacking failed: " + err.Error())
+	}
+	defer connection.Close()
+
+	message, err = t.receive()
+	if err != nil {
+		panic("Could not receive message from tunnel: " + err.Error())
+	}
+
+	io.Copy(readWriter, message.Payload)
+}
+
+func (t *Tunnel) send(message *protocol.Message) error {
+	var buffer bytes.Buffer
+	for key, value := range message.Header {
+		buffer.WriteString(fmt.Sprintf("%v:%v", key, value))
+	}
+
+	_, err := buffer.WriteTo(t.connection)
+	return err
+}
+
+func (t *Tunnel) receive() (*protocol.Message, error) {
+	message, err := protocol.ReadMessage(t.connection)
+	return message, err
 }
 
 func (t *Tunnel) Serve() {
@@ -34,7 +76,7 @@ func (t *Tunnel) Serve() {
 	for {
 		n, err := t.connection.Read(buffer)
 		if err != nil {
-			fmt.Printf("Error reading from %v: %v\n", t.connection.RemoteAddr(), err)
+			fmt.Printf("Error reading from %v: %v", t.connection.RemoteAddr(), err)
 			break
 		}
 
@@ -46,16 +88,17 @@ func (t *Tunnel) Serve() {
 }
 
 type TunnelServiceHost struct {
+	tunnel *Tunnel
 }
 
 func main() {
 	host := &TunnelServiceHost{}
-	if err := host.ListenAndServePH(); err != nil {
+	if err := host.ListenAndServe(); err != nil {
 		fmt.Sprintf("[FATAL] Error serving PH: %v", err)
 	}
 }
 
-func (t *TunnelServiceHost) ListenAndServePH() error {
+func (t *TunnelServiceHost) ListenAndServe() error {
 	address := "0.0.0.0:8080"
 	resolved, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
@@ -81,21 +124,19 @@ func (t *TunnelServiceHost) ListenAndServePH() error {
 
 		tunnel := NewTunnel(t, connection)
 		go tunnel.Serve()
+
+		// TODO: We need to hold tunnels, not a single tunnel.
+		t.tunnel = tunnel
 	}
 }
 
-// func (t *TunnelServiceHost) ListenAndServeHTTP() error {
-// 	http.HandleFunc("/", func(response http.ResponseWriter, request *http.Request) {
-// 		hostname := request.URL.Host
-
-// 		t.rw.Lock()
-// 		defer t.rw.Unlock()
-
-// 		if tunnel, ok := t.tunnels[hostname]; ok {
-// 			tunnel.HandleHttp(response, request)
-// 		} else {
-// 			response.WriteHeader(http.StatusNotFound)
-// 		}
-// 	})
-// 	return http.ListenAndServe("", nil)
-// }
+func (t *TunnelServiceHost) ListenAndServeHTTP() error {
+	http.HandleFunc("/", func(response http.ResponseWriter, request *http.Request) {
+		if t.tunnel != nil {
+			t.tunnel.HandleHttp(response, request)
+		} else {
+			response.WriteHeader(http.StatusNotFound)
+		}
+	})
+	return http.ListenAndServe("", nil)
+}
