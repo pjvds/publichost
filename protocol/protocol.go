@@ -50,7 +50,7 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 	}
 
 	// TODO: What if we close this reader?
-	request.Body = io.LimitReader(reader, contentLength)
+	request.Body = io.LimitReader(reader, int64(contentLength))
 
 	return request, nil
 }
@@ -62,7 +62,7 @@ func IsEndOfHeader(line string) bool {
 
 // Get the content length in bytes from the request header. If the header
 // is not present the a content length of zero is returned and no error.
-func getContentLength(request *Request) (int64, error) {
+func getContentLength(request *Request) (int, error) {
 	contentLength, ok := request.Header["ContentLength"]
 	if !ok {
 		return 0, nil
@@ -74,11 +74,4 @@ func getContentLength(request *Request) (int64, error) {
 	}
 
 	return length, nil
-}
-
-type TunnelResponse struct {
-	Headers        map[string]string
-	StatusCode     int
-	StatusResponse string
-	Body           io.Reader
 }
