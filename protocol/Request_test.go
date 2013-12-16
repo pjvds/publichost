@@ -1,4 +1,4 @@
-package request_test
+package protocol_test
 
 import (
 	"bytes"

@@ -1,23 +1,11 @@
-package request
+package protocol
 
 import (
 	"bufio"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 )
-
-type Request struct {
-	Header map[string]string
-	Body   io.Reader
-}
-
-func NewRequest() *Request {
-	return &Request{
-		Header: make(map[string]string),
-	}
-}
 
 // Read a request from the reader.
 func ReadRequest(reader io.Reader) (*Request, error) {
@@ -28,7 +16,8 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if IsEndOfHeader(line) {
+
+		if isEndOfHeader(line) {
 			break
 		}
 
@@ -62,22 +51,6 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 }
 
 // Determine if the given line marks the end of the header section of a request.
-func IsEndOfHeader(line string) bool {
+func isEndOfHeader(line string) bool {
 	return len(line) == 0
-}
-
-// Get the content length in bytes from the request header. If the header
-// is not present the a content length of zero is returned and no error.
-func getContentLength(request *Request) (int, error) {
-	contentLength, ok := request.Header["ContentLength"]
-	if !ok {
-		return 0, nil
-	}
-
-	length, err := strconv.Atoi(contentLength)
-	if err != nil || length < 0 {
-		return 0, fmt.Errorf("Invalid content length header value")
-	}
-
-	return length, nil
 }

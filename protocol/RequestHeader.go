@@ -1,4 +1,4 @@
-package request
+package protocol
 
 type RequestHeader map[string]string
 

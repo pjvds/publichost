@@ -31,11 +31,11 @@ func (t *Tunnel) HandleHttp(response http.ResponseWriter, request *http.Request)
 	var buffer bytes.Buffer
 	request.Write(&buffer)
 
-	message := protocol.NewMessage()
-	message.Header["ContentLength"] = strconv.Itoa(buffer.Len())
-	message.Payload = &buffer
+	r := protocol.NewRequest()
+	r.Header["ContentLength"] = strconv.Itoa(buffer.Len())
+	r.Body = &buffer
 
-	t.send(message)
+	t.send(r)
 	hijacker, ok := response.(http.Hijacker)
 	if !ok {
 		panic("Response does not support hijacking")
@@ -46,17 +46,17 @@ func (t *Tunnel) HandleHttp(response http.ResponseWriter, request *http.Request)
 	}
 	defer connection.Close()
 
-	message, err = t.receive()
+	r, err = t.receive()
 	if err != nil {
-		panic("Could not receive message from tunnel: " + err.Error())
+		panic("Could not receive request from tunnel: " + err.Error())
 	}
 
-	io.Copy(readWriter, message.Payload)
+	io.Copy(readWriter, r.Body)
 }
 
-func (t *Tunnel) send(message *protocol.Message) error {
+func (t *Tunnel) send(request *protocol.Request) error {
 	var buffer bytes.Buffer
-	for key, value := range message.Header {
+	for key, value := range request.Header {
 		buffer.WriteString(fmt.Sprintf("%v:%v", key, value))
 	}
 
@@ -64,8 +64,8 @@ func (t *Tunnel) send(message *protocol.Message) error {
 	return err
 }
 
-func (t *Tunnel) receive() (*protocol.Message, error) {
-	message, err := protocol.ReadMessage(t.connection)
+func (t *Tunnel) receive() (*protocol.Request, error) {
+	message, err := protocol.ReadRequest(t.connection)
 	return message, err
 }
 

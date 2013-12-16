@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/pjvds/publichost/protocol"
 	"net"
-	"time"
 )
 
 var (
@@ -29,17 +29,17 @@ func main() {
 	defer connection.Close()
 	fmt.Println("Connected to publichost server")
 
-	buffer := []byte("CREATE")
-	_, err = connection.Write(buffer)
-	if err != nil {
-		fmt.Println("Error writing data: %v", err)
+	for {
+		request, err := receive(connection)
+		if err != nil {
+			fmt.Printf("Error receiving message: %v", err)
+		} else {
+			fmt.Printf("Received: %s", request)
+		}
 	}
+}
 
-	time.Sleep(time.Second * 5)
-
-	buffer = []byte("CREATE2")
-	_, err = connection.Write(buffer)
-	if err != nil {
-		fmt.Println("Error writing data: %v", err)
-	}
+func receive(connection net.Conn) (*protocol.Request, error) {
+	message, err := protocol.ReadRequest(connection)
+	return message, err
 }
