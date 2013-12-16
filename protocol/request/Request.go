@@ -1,4 +1,4 @@
-package protocol
+package request
 
 import (
 	"bufio"
@@ -8,20 +8,20 @@ import (
 	"strings"
 )
 
-type Message struct {
-	Header  map[string]string
-	Payload io.Reader
+type Request struct {
+	Header map[string]string
+	Body   io.Reader
 }
 
-func NewMessage() *Message {
-	return &Message{
+func NewRequest() *Request {
+	return &Request{
 		Header: make(map[string]string),
 	}
 }
 
-// Read a message from the reader.
-func ReadMessage(reader io.Reader) (*Message, error) {
-	message := &Message{
+// Read a request from the reader.
+func ReadRequest(reader io.Reader) (*Request, error) {
+	request := &Request{
 		Header: make(map[string]string),
 	}
 
@@ -40,7 +40,7 @@ func ReadMessage(reader io.Reader) (*Message, error) {
 		key := data[0]
 		value := data[1]
 
-		message.Header[key] = value
+		request.Header[key] = value
 	}
 
 	// Check if the scanner didn't had problems
@@ -49,27 +49,27 @@ func ReadMessage(reader io.Reader) (*Message, error) {
 		return nil, err
 	}
 
-	// Get content length from the message header.
-	contentLength, err := getContentLength(message)
+	// Get content length from the request header.
+	contentLength, err := getContentLength(request)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: What if we close this reader?
-	message.Payload = io.LimitReader(reader, int64(contentLength))
+	request.Body = io.LimitReader(reader, int64(contentLength))
 
-	return message, nil
+	return request, nil
 }
 
-// Determine if the given line marks the end of the header section of a message.
+// Determine if the given line marks the end of the header section of a request.
 func IsEndOfHeader(line string) bool {
 	return len(line) == 0
 }
 
-// Get the content length in bytes from the message header. If the header
+// Get the content length in bytes from the request header. If the header
 // is not present the a content length of zero is returned and no error.
-func getContentLength(message *Message) (int, error) {
-	contentLength, ok := message.Header["ContentLength"]
+func getContentLength(request *Request) (int, error) {
+	contentLength, ok := request.Header["ContentLength"]
 	if !ok {
 		return 0, nil
 	}

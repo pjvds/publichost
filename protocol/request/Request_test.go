@@ -1,9 +1,9 @@
-package protocol_test
+package request_test
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/pjvds/publichost/protocol"
+	"github.com/pjvds/publichost/protocol/request"
 	"testing"
 )
 
@@ -13,7 +13,7 @@ func TestReadRequestSetsHeaderEntry(t *testing.T) {
 
 	data := bytes.NewBufferString(fmt.Sprintf("%v:%v\r\n", key, value))
 
-	request, err := protocol.ReadRequest(data)
+	request, err := request.ReadRequest(data)
 	if err != nil {
 		t.Errorf("Unexpected error for valid request: %v", err)
 	}
