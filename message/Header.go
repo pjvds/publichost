@@ -1,12 +1,5 @@
 package message
 
-const (
-	TypeExposeRequest    = iota
-	TypeExposeReponse    = iota
-	TypeProxyDataRequest = iota
-	TypeNokResponse      = iota
-)
-
 type Header struct {
 	// The id of the type of the message.
 	TypeId byte
@@ -15,15 +8,9 @@ type Header struct {
 	Length int32
 }
 
-type ExposeRequest struct {
-	LocalAddress string
-}
-
-type ExposeResponse struct {
-	RouteId       int32
-	RemoteAddress string
-}
-
-type NokResponse struct {
-	Error string
+func NewHeader(typeId byte, length int32) *Header {
+	return &Header{
+		TypeId: typeId,
+		Length: length,
+	}
 }

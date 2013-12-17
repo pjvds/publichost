@@ -17,7 +17,7 @@ func NewReader(r io.Reader) *Reader {
 	}
 }
 
-func (r *Reader) Read() (interface{}, error) {
+func (r *Reader) Read() (Message, error) {
 	var header Header
 
 	decoder := gob.NewDecoder(r.reader)

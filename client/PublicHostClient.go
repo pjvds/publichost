@@ -16,6 +16,7 @@ var (
 type PublicHostClient struct {
 	conn   net.Conn
 	reader *message.Reader
+	writer *message.Writer
 }
 
 func Dial(address string) (*PublicHostClient, error) {
@@ -44,5 +45,13 @@ func (c *PublicHostClient) handshake() error {
 }
 
 func (p *PublicHostClient) CreateTunnel(hostname string, port int) {
+}
 
+func (c *PublicHostClient) request(request message.Message) (response message.Message, err error) {
+	if err := c.writer.Write(request); err != nil {
+		return nil, err
+	}
+
+	response, err = c.reader.Read()
+	return
 }
