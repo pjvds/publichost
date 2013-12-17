@@ -1,4 +1,4 @@
-package message
+package proto
 
 type ProxyDataFlags byte
 

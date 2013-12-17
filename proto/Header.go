@@ -1,4 +1,4 @@
-package message
+package proto
 
 type Header struct {
 	// The id of the type of the message.

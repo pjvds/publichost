@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/pjvds/publichost/message"
+	"github.com/pjvds/publichost/proto"
 	"net"
 )
 
