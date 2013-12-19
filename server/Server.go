@@ -52,6 +52,12 @@ type Server interface {
 	ListenAndServe() error
 }
 
+func NewServer(address string) Server {
+	return &server{
+		tunnels: make(map[string]*TunnelFrontEnd),
+	}
+}
+
 type server struct {
 	address string // The TCP address to listen on
 	lock    sync.Mutex
