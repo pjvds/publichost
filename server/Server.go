@@ -22,8 +22,8 @@ type TunnelFrontEnd struct {
 
 func (t *TunnelFrontEnd) Ack() {
 	r := http.Response{
-		StatusCode = http.StatusOK
-		Header: make(http.Header),
+		StatusCode: http.StatusOK,
+		Header:     make(http.Header),
 	}
 	r.Header.Add("X-Tunnel-Hostname", t.Hostname)
 
