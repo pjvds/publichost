@@ -24,6 +24,8 @@ func (t *TunnelFrontEnd) ServeHTTP(response http.ResponseWriter, request *http.R
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
+	log.Debug("Proxying request %s to tunnel", request.RequestURI)
+
 	if err := request.Write(t.readWriter); err != nil {
 		log.Error("Unable to write request to tunnel: %v", err)
 	}
@@ -69,10 +71,15 @@ func (s *server) ListenAndServe() error {
 }
 
 func (s *server) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	log.Debug("Incoming request: %v %v", request.Method, request.RequestURI)
+
 	if request.URL.Host == "tunneler.publichost.me" {
+		log.Debug("Handling request as new tunnel request")
+
 		s.handleNewTunnelRequest(response, request)
 		return
 	} else {
+		log.Debug("Handling request http request to proxy")
 		s.handleHttpTraffic(response, request)
 	}
 }

@@ -22,10 +22,15 @@ func NewClientConnection(hostname string) (ClientConnection, error) {
 		return nil, err
 	}
 
+	log.Debug("Connecting to %v", address)
+
 	conn, err := net.DialTCP("tcp", nil, address)
 	if err != nil {
+		log.Error(err.Error())
 		return nil, err
 	}
+
+	log.Debug("Connected to %v", address)
 
 	return handshake(conn)
 }
@@ -33,6 +38,8 @@ func NewClientConnection(hostname string) (ClientConnection, error) {
 // Will handshake with the server. The caller is responsible
 // for closing the connection on an error.
 func handshake(conn net.Conn) (ClientConnection, error) {
+	log.Debug("Starting handshake")
+
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 
@@ -46,6 +53,8 @@ func handshake(conn net.Conn) (ClientConnection, error) {
 	if err := writer.Flush(); err != nil {
 		return nil, err
 	}
+
+	log.Debug("Written handshake request")
 
 	response, err := http.ReadResponse(reader, request)
 	if err != nil {
