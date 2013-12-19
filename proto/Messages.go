@@ -6,14 +6,21 @@ import (
 )
 
 const (
-	TypeExposeRequest    = iota
-	TypeExposeResponse   = iota
-	TypeProxyDataRequest = iota
-	TypeNokResponse      = iota
+	TypeExposeRequest     = byte(iota)
+	TypeExposeResponse    = byte(iota)
+	TypeProxyDataRequest  = byte(iota)
+	TypeProxyDataResponse = byte(iota)
+	TypeNokResponse       = byte(iota)
 )
 
 type ExposeRequest struct {
 	LocalAddress string
+}
+
+func NewExposeRequest(localAddress string) *ExposeRequest {
+	return &ExposeRequest{
+		LocalAddress: localAddress,
+	}
 }
 
 func (m *ExposeRequest) GetTypeId() byte {

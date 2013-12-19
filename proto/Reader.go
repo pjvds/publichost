@@ -17,14 +17,21 @@ func NewReader(r io.Reader) *Reader {
 	}
 }
 
-func (r *Reader) Read() (Message, error) {
-	var header Header
+func (r *Reader) Read() (*Envelop, error) {
+	header := new(Header)
 
 	decoder := gob.NewDecoder(r.reader)
 	if err := decoder.Decode(&header); err != nil {
 		return nil, err
 	}
 
-	result, err := r.decoder.Decode(header.TypeId, header.Length, io.LimitReader(r.reader, int64(header.Length)))
-	return result, err
+	message, err := r.decoder.Decode(header.TypeId, header.Length, io.LimitReader(r.reader, int64(header.Length)))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Envelop{
+		Header:  header,
+		Payload: message,
+	}, nil
 }

@@ -1,7 +1,6 @@
 package proto
 
 import (
-	"bytes"
 	"encoding/gob"
 	"io"
 )
@@ -16,20 +15,14 @@ func NewWriter(w io.Writer) *Writer {
 	}
 }
 
-func (r *Writer) Write(m Message) (err error) {
-	buffer := new(bytes.Buffer)
-	if err := m.Write(buffer); err != nil {
-		return err
-	}
-
-	header := NewHeader(m.GetTypeId(), int32(buffer.Len()))
-
+func (r *Writer) Write(e Envelop) (err error) {
 	encoder := gob.NewEncoder(r.writer)
-	if err := encoder.Encode(header); err != nil {
+
+	if err := encoder.Encode(e.Header); err != nil {
 		return err
 	}
 
-	if _, err := buffer.WriteTo(r.writer); err != nil {
+	if err := e.Payload.Write(r.writer); err != nil {
 		return err
 	}
 
