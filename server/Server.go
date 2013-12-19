@@ -20,6 +20,17 @@ type TunnelFrontEnd struct {
 	readWriter *bufio.ReadWriter
 }
 
+func (t *TunnelFrontEnd) Ack() {
+	r := http.Response{}
+	r.StatusCode = http.StatusOK
+	r.Header.Add("X-Tunnel-Hostname", t.Hostname)
+
+	// TODO: Close tunnel on error
+	writer := t.readWriter.Writer
+	r.Write(writer)
+	writer.Flush()
+}
+
 func (t *TunnelFrontEnd) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
@@ -108,7 +119,7 @@ func (s *server) handleNewTunnelRequest(response http.ResponseWriter, request *h
 		response.WriteHeader(http.StatusNotModified)
 	}
 
-	response.Header().Set("X-PublicHost-HostName", tunnel.Hostname)
+	tunnel.Ack()
 }
 
 func (s *server) handleHttpTraffic(response http.ResponseWriter, request *http.Request) {
