@@ -16,15 +16,10 @@ type clientConnection struct {
 	writer     *bufio.Writer
 }
 
-func NewClientConnection(hostname string) (ClientConnection, error) {
-	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%v:80", hostname))
-	if err != nil {
-		return nil, err
-	}
-
+func NewClientConnection(address string) (ClientConnection, error) {
 	log.Debug("Connecting to %v", address)
 
-	conn, err := net.DialTCP("tcp", nil, address)
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		log.Error(err.Error())
 		return nil, err
