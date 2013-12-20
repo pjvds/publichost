@@ -13,6 +13,12 @@ var (
 func main() {
 	flag.Parse()
 
-	_, err := client.NewClientConnection(*address)
-	fmt.Printf("Err: %v\n", err)
+	client, err := client.NewClientConnection(*address)
+	if err != nil {
+		fmt.Printf("Err: %v\n", err)
+		return
+	}
+	defer client.Close()
+
+	fmt.Printf("Tunneling %s\n", client.GetAddress())
 }

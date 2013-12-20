@@ -8,12 +8,20 @@ import (
 )
 
 type ClientConnection interface {
+	GetAddress() string
+	Close() error
 }
 
 type clientConnection struct {
+	publicAddress string // The public address of the tunnel
+
 	connection net.Conn
 	reader     *bufio.Reader
 	writer     *bufio.Writer
+}
+
+func (c *clientConnection) GetAddress() string {
+	return c.publicAddress
 }
 
 func NewClientConnection(address string) (ClientConnection, error) {
@@ -27,7 +35,12 @@ func NewClientConnection(address string) (ClientConnection, error) {
 
 	log.Debug("Connected to %v", address)
 
-	return handshake(conn)
+	client, err := handshake(conn)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 // Will handshake with the server. The caller is responsible
@@ -55,14 +68,18 @@ func handshake(conn net.Conn) (ClientConnection, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("Handshake replied with %v %v", response.Status, response.StatusCode)
+	log.Debug("Handshake replied with %v", response.Status)
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Cannot create tunnel: %v (%v)", response.Status, response.StatusCode)
+		return nil, fmt.Errorf(response.Status)
 	}
 
-	// TODO: Negociate protocol version, etc.
-	return clientConnection{
-		connection: conn,
+	return &clientConnection{
+		connection:    conn,
+		publicAddress: response.Header.Get("X-Tunnel-Hostname"),
 	}, nil
+}
+
+func (c *clientConnection) Close() error {
+	return c.connection.Close()
 }
