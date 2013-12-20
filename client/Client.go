@@ -55,6 +55,8 @@ func handshake(conn net.Conn) (ClientConnection, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Debug("Handshake replied with %v %v", response.Status, response.StatusCode)
+
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Cannot create tunnel: %v (%v)", response.Status, response.StatusCode)
 	}
