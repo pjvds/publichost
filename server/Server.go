@@ -69,6 +69,7 @@ type Server interface {
 
 func NewServer(address string) Server {
 	return &server{
+		address: address,
 		tunnels: make(map[string]*TunnelFrontEnd),
 	}
 }
