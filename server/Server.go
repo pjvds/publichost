@@ -1,4 +1,4 @@
-package server
+xpackage server
 
 import (
 	"bufio"

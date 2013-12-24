@@ -80,6 +80,13 @@ func handshake(conn net.Conn) (ClientConnection, error) {
 	}, nil
 }
 
+func (c *clientConnection) handleProxyRequest() {
+	scanner := bufio.NewScanner(c.reader)
+	for scanner.Scan() {
+
+	}
+}
+
 func (c *clientConnection) Close() error {
 	return c.connection.Close()
 }
