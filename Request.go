@@ -1,8 +1,10 @@
 package publichost
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
+	"strings"
 )
 
 var (
@@ -26,6 +28,30 @@ type Request struct {
 	Body io.Reader
 }
 
+func NewRequest(id uint16, t uint8, body io.Reader) *Request {
+	length := uint16(0)
+
+	if body != nil {
+		switch v := body.(type) {
+		case *bytes.Buffer:
+			length = uint16(v.Len())
+		case *bytes.Reader:
+			length = uint16(v.Len())
+		case *strings.Reader:
+			length = uint16(v.Len())
+		default:
+			panic("body type not supported")
+		}
+	}
+
+	return &Request{
+		Id:     id,
+		Type:   t,
+		Length: length,
+		Body:   body,
+	}
+}
+
 func (r Request) Write(writer io.Writer) (err error) {
 	if err = binary.Write(writer, binary.BigEndian, r.Id); err != nil {
 		return
@@ -37,6 +63,9 @@ func (r Request) Write(writer io.Writer) (err error) {
 		return
 	}
 
+	if r.Body != nil {
+		io.Copy(dst, src)
+	}
 	return
 }
 
