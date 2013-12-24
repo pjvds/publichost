@@ -64,8 +64,11 @@ func (r Request) Write(writer io.Writer) (err error) {
 	}
 
 	if r.Body != nil {
-		io.Copy(dst, src)
+		if _, err = io.Copy(writer, r.Body); err != nil {
+			return
+		}
 	}
+
 	return
 }
 

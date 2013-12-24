@@ -35,8 +35,8 @@ var _ = Describe("ReadRequest", func() {
 
 		theId := uint16(1)
 		theType := uint8(2)
-		theBody := bytes.NewBufferString("hello world")
-		NewRequest(theId, theType, theBody).Write(buffer)
+		theBody := []byte("hello world")
+		NewRequest(theId, theType, bytes.NewBuffer(theBody)).Write(buffer)
 
 		request, err := ReadRequest(buffer)
 
@@ -51,12 +51,12 @@ var _ = Describe("ReadRequest", func() {
 			Expect(request.Type).To(Equal(theType))
 		})
 		It("should have read the length", func() {
-			Expect(request.Length).To(Equal(uint16(theBody.Len())))
+			Expect(request.Length).To(Equal(uint16(len(theBody))))
 		})
 		It("should have read the body", func() {
 			actual, _ := ioutil.ReadAll(request.Body)
 
-			Expect(actual).To(Equal(theBody.Bytes()))
+			Expect(actual).To(Equal(theBody))
 		})
 	})
 })
