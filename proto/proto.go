@@ -1,5 +1,0 @@
-package proto
-
-import (
-	"net"
-)
