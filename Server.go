@@ -4,11 +4,17 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"github.com/pjvds/publichost/network"
 	"io"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+)
+
+const (
+	TRequest  = byte(iota)
+	TResponse = byte(iota)
 )
 
 const (
@@ -97,6 +103,24 @@ func readNextRequest(reader io.Reader) (request *Request, err error) {
 	}
 }
 
+// Read the next response. When an temporary error occurs
+// it will retry until a response is received. When a non
+// temporary error occurs, this will returned.
+func readNextResponse(reader io.Reader) (response *Response, err error) {
+	for {
+		if response, err = ReadResponse(reader); err != nil {
+			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+				toSleep := 1 * time.Second
+
+				log.Warning("temporary error reading response: %v; retry in ", toSleep)
+				time.Sleep(toSleep)
+				continue
+			}
+			return
+		}
+	}
+}
+
 func (t *TunnelConnection) close() {
 	defer t.conn.Close()
 
@@ -119,7 +143,8 @@ func ListenAndServe(commandAddress, dataAddress string) error {
 }
 
 func (s *Server) Serve() (err error) {
-	var commandListener, dataListener net.Listener
+	var commandListener
+	var dataListener net.Listener
 	if commandListener, err = net.Listen("tcp", s.commandAddress); err != nil {
 		log.Error("error opening command listener at %v: %v", s.commandAddress, err)
 		return
