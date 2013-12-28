@@ -64,3 +64,23 @@ func (r *Response) Write(writer io.Writer) (err error) {
 
 	return
 }
+
+func ReadResponse(reader io.Reader) (response *Response, err error) {
+	r := new(Response)
+	if err = binary.Read(reader, binary.BigEndian, &r.RequestId); err != nil {
+		return
+	}
+	if err = binary.Read(reader, binary.BigEndian, &r.StatusCode); err != nil {
+		return
+	}
+	if err = binary.Read(reader, binary.BigEndian, &r.Length); err != nil {
+		return
+	}
+
+	if r.Length > 0 {
+		r.Body = io.LimitReader(reader, int64(r.Length))
+	}
+
+	response = r
+	return
+}
