@@ -2,6 +2,7 @@ package publichost
 
 import (
 	"github.com/pjvds/publichost/network"
+	"net"
 	"time"
 )
 
@@ -28,6 +29,10 @@ type TunnelFrontEnd struct {
 	conn network.Connection
 
 	mux *packetReaderMux
+
+	outgoing chan *network.Packet
+
+	server *Server
 }
 
 func newTunnelFrondEnd(conn network.Connection) *TunnelFrontEnd {
@@ -39,13 +44,25 @@ func newTunnelFrondEnd(conn network.Connection) *TunnelFrontEnd {
 
 func (t *TunnelFrontEnd) Serve(s *Server) {
 	defer t.close()
+	t.server = s
 
-	select {
-	case request := <-t.mux.Requests:
-		log.Info("request received: %s", request)
-	case response := <-t.mux.Responses:
-		log.Info("response received: %s", response)
+	for {
+		select {
+		case request := <-t.mux.Requests:
+			log.Notice("request received: %s", request)
+		case response := <-t.mux.Responses:
+			log.Info("response received: %s", response)
+		case outgoing := <-t.outgoing:
+			if err := t.conn.Send(outgoing); err != nil {
+				log.Error("error sending packet: %v", err)
+				return
+			}
+		}
 	}
+}
+
+func (t *TunnelFrontEnd) Proxy(net net.Conn) {
+
 }
 
 func (t *TunnelFrontEnd) close() {
