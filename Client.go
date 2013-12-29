@@ -2,25 +2,27 @@ package publichost
 
 import (
 	"net"
+    "bufio"
+    "io"
 )
 
-type StreamId uint32
+type streamId uint32
 
-type OutgoingData struct {
+type outgoingData struct {
     Data []byte
 
     Ack chan bool
     Err chan error
 }
 
-type IncommingData struct {
+type Operation struct {
     Data []byte
 
     Ack chan bool
     Err chan error
 }
 
-type StreamFrondEnd struct {
+type streamFrondEnd struct {
 	Id   StreamId
 	conn net.Conn
 
@@ -28,6 +30,15 @@ type StreamFrondEnd struct {
     incomming chan *
 }
 
-type client struct {
-    streamManager 
+type Connection interface{
+    io.ReadWriteCloser
+    String() string
+}
+
+type clientMux struct {
+    
+}
+
+func (c *clientMux) Handle(message Message) {
+    
 }

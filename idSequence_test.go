@@ -1,4 +1,4 @@
-package server
+package publichost
 
 import (
 	. "github.com/onsi/ginkgo"
