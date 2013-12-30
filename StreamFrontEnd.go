@@ -28,7 +28,7 @@ func NewStreamData(data []byte, eof bool) *StreamData {
 
 type StreamFrondEnd struct {
 	Id   StreamId
-	conn net.TCPConn
+	conn *net.TCPConn
 
 	log *logging.Logger
 
@@ -36,6 +36,31 @@ type StreamFrondEnd struct {
 	Incomming chan *StreamData
 
 	outgoingDone chan bool
+}
+
+func Dial(id StreamId, laddr string) (stream *StreamFrondEnd, err error) {
+	var conn *net.TCPConn
+	var address *net.TCPAddr
+
+	if address, err = net.ResolveTCPAddr("tcp", laddr); err != nil {
+		return
+	}
+
+	if conn, err = net.DialTCP("tcp", nil, address); err != nil {
+		return
+	}
+
+	stream = &StreamFrondEnd{
+		Id:   id,
+		conn: conn,
+		log:  log,
+
+		Outgoing:  make(chan *StreamData, 25),
+		Incomming: make(chan *StreamData, 25),
+
+		outgoingDone: make(chan bool, 1),
+	}
+	return
 }
 
 // Serves incomming and outgoing data until both of them
@@ -63,6 +88,13 @@ func (s *StreamFrondEnd) Serve() {
 
 	// Wait until we finished reading
 	<-readClosed
+}
+
+func (s *StreamFrondEnd) StreamData(data []byte) (ack chan bool, err chan error) {
+	d := NewStreamData(data, false)
+	s.Outgoing <- d
+
+	return d.Ack, d.Err
 }
 
 func (s *StreamFrondEnd) handleOutgoing(outgoing *StreamData) {

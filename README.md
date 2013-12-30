@@ -19,3 +19,15 @@ ACK || NACK reason
 EOF streamid R || W
 ACK || NACK reason
 
+## Client
+
+A client receives incomming requests to:
+
+* Open new streams
+* Proxy data to streams
+* EOF streams
+* Close streams
+
+It actively monitors the open streams for incomming data and sends
+this to the publichost front end server. Which will proxy it to
+the origin connection.
