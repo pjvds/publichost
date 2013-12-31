@@ -1,30 +1,32 @@
-package publichost
+package message_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	. "github.com/pjvds/publichost/net/message"
 )
 
-var _ = Describe("idSequence", func() {
-	var lastId uint32
-	var sequence *idSequence
+var _ = Describe("IdSequence", func() {
+	var lastId Id
+	var sequence IdSequence
 
 	BeforeEach(func() {
-		sequence = newIdSequence()
+		sequence = NewIdSequence()
 		lastId = sequence.Next()
 
-		Expect(lastId).To(Equal(uint32(1)))
+		Expect(lastId).To(Equal(Id(1)))
 	})
 
 	Context("when advancing to next", func() {
-		var nextId uint32
+		var nextId Id
 
 		BeforeEach(func() {
 			nextId = sequence.Next()
 		})
 
 		It("it should increment the id with one", func() {
-			Expect(nextId).To(Equal(uint32(lastId + 1)))
+			Expect(nextId).To(Equal(Id(lastId + 1)))
 		})
 	})
 })

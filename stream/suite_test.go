@@ -1,4 +1,4 @@
-package publichost
+package stream_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestPublichost(t *testing.T) {
+func TestStream(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Publichost Suite")
+	RunSpecs(t, "Stream Suite")
 }
