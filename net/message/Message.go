@@ -21,3 +21,11 @@ type Message struct {
 	CorrelationId uint64
 	Body          []byte
 }
+
+func NewMessage(typeId byte, correlationId uint64, body []byte) *Message {
+	return &Message{
+		TypeId:        typeId,
+		CorrelationId: correlationId,
+		Body:          body,
+	}
+}
