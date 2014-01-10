@@ -5,8 +5,10 @@ import (
 )
 
 const (
+	OpOpenTunnel  = byte(iota)
 	OpOpenStream  = byte(iota)
-	OpStreamData  = byte(iota)
+	OpReadStream  = byte(iota)
+	OpWriteStream = byte(iota)
 	OpCloseStream = byte(iota)
 	Ack           = byte(iota)
 	Nack          = byte(iota)
