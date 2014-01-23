@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"github.com/pjvds/publichost/tunnel"
-	"log"
 	"net"
 )
 
@@ -20,7 +19,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	host := tunnel.NewTunnelHost(conn)
+	host := tunnel.NewBackendHost(conn)
 	if err := host.Serve(); err != nil {
 		log.Fatal(err)
 	}

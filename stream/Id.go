@@ -14,3 +14,8 @@ func (i Id) Bytes() []byte {
 
 	return b
 }
+
+func ParseId(body []byte) Id {
+	id := binary.BigEndian.Uint32(body)
+	return Id(id)
+}

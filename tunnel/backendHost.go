@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-type localHost struct {
+type backendHost struct {
 	conn   io.ReadWriteCloser
 	reader message.Reader
 	writer message.Writer
@@ -17,8 +17,8 @@ type localHost struct {
 	handlers map[byte]MessageHandler
 }
 
-func NewLocalTunnelHost(conn io.ReadWriteCloser) Host {
-	h := &localHost{
+func NewBackendHost(conn io.ReadWriteCloser) Host {
+	h := &backendHost{
 		conn:     conn,
 		reader:   message.NewReader(conn),
 		writer:   message.NewWriter(conn),
@@ -26,11 +26,12 @@ func NewLocalTunnelHost(conn io.ReadWriteCloser) Host {
 		handlers: make(map[byte]MessageHandler),
 	}
 	h.handlers[message.OpOpenStream] = NewOpenStreamHandler(h.tunnel)
+	h.handlers[message.OpCloseStream] = NewCloseStreamHandler(h.tunnel)
 
 	return h
 }
 
-func (h *localHost) Serve() (err error) {
+func (h *backendHost) Serve() (err error) {
 	defer h.conn.Close()
 
 	var request *message.Message
@@ -68,6 +69,7 @@ func (h *localHost) Serve() (err error) {
 		if handler, ok := h.handlers[request.TypeId]; ok {
 			go handler.Handle(response, request)
 		} else {
+			log.Debug("No handlers for message type id %v", request.TypeId)
 			go response.Nack(errors.New("unknown type id"))
 		}
 	}

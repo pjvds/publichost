@@ -4,21 +4,21 @@ import (
 	"github.com/pjvds/publichost/stream"
 )
 
-type tunnelBackend struct {
+type backend struct {
 	dialer    stream.Dialer
 	sequencer stream.IdSequence
 	streams   stream.Map
 }
 
 func NewTunnelBackend() Tunnel {
-	return &tunnelBackend{
+	return &backend{
 		dialer:    stream.NewDialer(),
 		sequencer: stream.NewIdSequence(),
 		streams:   stream.NewThreadSafeMap(),
 	}
 }
 
-func (t *tunnelBackend) OpenStream(network, address string) (id stream.Id, err error) {
+func (t *backend) OpenStream(network, address string) (id stream.Id, err error) {
 	var s stream.Stream
 	if s, err = t.dialer.Dial(network, address); err != nil {
 		return
@@ -30,7 +30,7 @@ func (t *tunnelBackend) OpenStream(network, address string) (id stream.Id, err e
 	return
 }
 
-func (t *tunnelBackend) ReadStream(id stream.Id, p []byte) (n int, err error) {
+func (t *backend) ReadStream(id stream.Id, p []byte) (n int, err error) {
 	var s stream.Stream
 
 	if s, err = t.streams.Get(id); err != nil {
@@ -41,7 +41,7 @@ func (t *tunnelBackend) ReadStream(id stream.Id, p []byte) (n int, err error) {
 	return s.Read(p)
 }
 
-func (t *tunnelBackend) WriteStream(id stream.Id, p []byte) (n int, err error) {
+func (t *backend) WriteStream(id stream.Id, p []byte) (n int, err error) {
 	var s stream.Stream
 
 	if s, err = t.streams.Get(id); err != nil {
@@ -52,7 +52,7 @@ func (t *tunnelBackend) WriteStream(id stream.Id, p []byte) (n int, err error) {
 	return s.Write(p)
 }
 
-func (t *tunnelBackend) CloseStream(id stream.Id) (err error) {
+func (t *backend) CloseStream(id stream.Id) (err error) {
 	var s stream.Stream
 
 	if s, err = t.streams.Get(id); err != nil {
