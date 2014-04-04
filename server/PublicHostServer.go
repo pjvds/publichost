@@ -62,7 +62,7 @@ func (p *publicHostServer) serveTunnels() error {
 			return err
 		}
 
-		tunnelHost := tunnel.NewTunnelHost(conn)
+		tunnelHost := tunnel.NewBackendHost(conn)
 		go tunnelHost.Serve()
 	}
 }

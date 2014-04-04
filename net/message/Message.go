@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	OpPing        = byte(iota)
 	OpOpenTunnel  = byte(iota)
 	OpOpenStream  = byte(iota)
 	OpReadStream  = byte(iota)

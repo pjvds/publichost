@@ -1,7 +1,6 @@
 package tunnel
 
 import (
-	"bytes"
 	"github.com/op/go-logging"
 	"github.com/pjvds/publichost/net/message"
 	"github.com/pjvds/publichost/stream"

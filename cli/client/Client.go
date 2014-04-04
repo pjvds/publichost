@@ -2,8 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/pjvds/publichost/tunnel"
-	"net"
+	"github.com/pjvds/publichost/net"
 )
 
 var (
@@ -13,7 +12,7 @@ var (
 func main() {
 	flag.Parse()
 
-	conn, err := net.Dial("tcp", *address)
+	conn, err := net.Dial(*address)
 	if err != nil {
 		log.Fatal(err)
 	}
