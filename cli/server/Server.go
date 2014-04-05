@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	address = flag.String("address", "127.0.0.1:8080", "The address to bind to")
+	address = flag.String("address", "localhost:8081", "The address to bind to")
 )
 
 func main() {

@@ -6,20 +6,21 @@ import (
 )
 
 type OpenStreamHandler struct {
+	localAddress string
 	tunnel Tunnel
 	log    *logging.Logger
 }
 
-func NewOpenStreamHandler(tunnel Tunnel) MessageHandler {
+func NewOpenStreamHandler(tunnel Tunnel, localAddress string) MessageHandler {
 	return &OpenStreamHandler{
 		tunnel: tunnel,
+		localAddress: localAddress,
 		log:    logging.MustGetLogger("handlers"),
 	}
 }
 
 func (h *OpenStreamHandler) Handle(response ResponseWriter, m *message.Message) error {
-	address := string(m.Body)
-	streamId, err := h.tunnel.OpenStream("tcp", address)
+	streamId, err := h.tunnel.OpenStream("tcp", h.localAddress)
 
 	if err != nil {
 		return response.Nack(err)

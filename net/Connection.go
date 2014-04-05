@@ -39,10 +39,17 @@ func Dial(address string) (c ClientConnection, err error) {
 		return nil, err
 	}
 
+	c = NewClientConnection(conn)
+	return
+}
+
+func NewClientConnection(conn net.Conn) (c ClientConnection) {
 	c = &clientConnection{
 		conn:   conn,
 		reader: message.NewReader(conn),
 		writer: message.NewWriter(conn),
+
+		wg: &sync.WaitGroup{},
 
 		outstandingRequests: make(map[uint64]*roundtrip),
 		outgoing:            make(chan *roundtrip, 10),

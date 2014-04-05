@@ -31,3 +31,8 @@ A client receives incomming requests to:
 It actively monitors the open streams for incomming data and sends
 this to the publichost front end server. Which will proxy it to
 the origin connection.
+
+## Client and server details
+
+Server http: localhost:8080
+Server data: localhost:8081

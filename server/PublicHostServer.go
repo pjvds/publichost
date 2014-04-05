@@ -3,6 +3,8 @@ package server
 import (
 	"bufio"
 	"github.com/pjvds/publichost/tunnel"
+	"github.com/pjvds/publichost/net/message"
+	pnet "github.com/pjvds/publichost/net"
 	"net"
 	"net/http"
 )
@@ -31,6 +33,7 @@ func ListenAndServe(address string) (err error) {
 
 	server := publicHostServer{
 		listener: listener,
+		tunnels: make(map[string]tunnel.Tunnel),
 	}
 	return server.Serve()
 }
@@ -62,8 +65,21 @@ func (p *publicHostServer) serveTunnels() error {
 			return err
 		}
 
-		tunnelHost := tunnel.NewBackendHost(conn)
-		go tunnelHost.Serve()
+		reader := message.NewReader(conn)
+		writer := message.NewWriter(conn)
+
+		m, err := reader.Read()
+		if err != nil || m.TypeId != message.OpOpenTunnel {
+			conn.Close()
+			continue
+		}
+
+		if err := writer.Write(message.NewMessage(message.Ack, m.CorrelationId, nil)); err != nil {
+			conn.Close()
+			continue
+		}
+
+		p.tunnels["foobar"] = tunnel.NewFrondend(pnet.NewClientConnection(conn))
 	}
 }
 
@@ -71,7 +87,7 @@ func (p *publicHostServer) serveHttp() error {
 	http.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		log.Debug("incomming http request from %v to %v", req.RemoteAddr, req.RequestURI)
 
-		if t, ok := p.tunnels[req.URL.Host]; ok {
+		if t, ok := p.tunnels["foobar"]; ok {
 			// TODO: We need to rewrite the destination
 			id, err := t.OpenStream("tcp", "127.0.0.1:4000")
 			if err != nil {
@@ -106,5 +122,5 @@ func (p *publicHostServer) serveHttp() error {
 		}
 	})
 
-	return http.ListenAndServe("0.0.0.0:4000", nil)
+	return http.ListenAndServe("0.0.0.0:8080", nil)
 }

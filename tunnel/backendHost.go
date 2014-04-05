@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/pjvds/publichost/net/message"
 	"io"
+	"fmt"
 )
 
 type backendHost struct {
@@ -12,12 +13,12 @@ type backendHost struct {
 	writer message.Writer
 
 	tunnel       Tunnel
-	localAddress string
+	LocalAddress string
 
 	handlers map[byte]MessageHandler
 }
 
-func NewBackendHost(conn io.ReadWriteCloser) Host {
+func NewBackendHost(conn io.ReadWriteCloser, localAddress string) Host {
 	h := &backendHost{
 		conn:     conn,
 		reader:   message.NewReader(conn),
@@ -25,8 +26,10 @@ func NewBackendHost(conn io.ReadWriteCloser) Host {
 		tunnel:   NewTunnelBackend(),
 		handlers: make(map[byte]MessageHandler),
 	}
-	h.handlers[message.OpOpenStream] = NewOpenStreamHandler(h.tunnel)
+	h.handlers[message.OpOpenStream] = NewOpenStreamHandler(h.tunnel, localAddress)
 	h.handlers[message.OpCloseStream] = NewCloseStreamHandler(h.tunnel)
+
+	h.LocalAddress = localAddress
 
 	return h
 }
@@ -37,7 +40,7 @@ func (h *backendHost) Serve() (err error) {
 	var request *message.Message
 	var response *message.Message
 
-	openTunnel := message.NewMessage(message.OpOpenTunnel, 1, []byte(h.localAddress))
+	openTunnel := message.NewMessage(message.OpOpenTunnel, 1, []byte(h.LocalAddress))
 	if err = h.writer.Write(openTunnel); err != nil {
 		log.Debug("unable to write handshake message: %v", err)
 		return
@@ -63,6 +66,8 @@ func (h *backendHost) Serve() (err error) {
 			}
 			break
 		}
+
+		fmt.Printf("incomming: %s\n", request)
 
 		response := NewResponseWriter(h.writer, request.CorrelationId)
 
