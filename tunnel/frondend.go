@@ -1,4 +1,4 @@
-package tunnel
+	package tunnel
 
 import (
 	"encoding/binary"
@@ -6,6 +6,7 @@ import (
 	"github.com/pjvds/publichost/net"
 	"github.com/pjvds/publichost/net/message"
 	"github.com/pjvds/publichost/stream"
+	"bytes"
 )
 
 type frondend struct {
@@ -66,7 +67,11 @@ func (t *frondend) WriteStream(id stream.Id, p []byte) (n int, err error) {
 	var response *message.Message
 
 	// TODO: use difference sequence
-	request := message.NewMessage(message.OpReadStream, uint64(t.messageSequence.Next()), id.Bytes())
+	var body bytes.Buffer
+	body.Write(id.Bytes())
+	body.Write(p)
+
+	request := message.NewMessage(message.OpReadStream, uint64(t.messageSequence.Next()), body.Bytes())
 	if response, err = t.conn.SendRequest(request); err != nil {
 		return
 	}

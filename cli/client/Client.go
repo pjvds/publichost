@@ -8,7 +8,6 @@ import (
 
 var (
 	address = flag.String("address", "localhost:8081", "The publichost server to connect")
-
 	localAddress = flag.String("local", "localhost:4000", "The local address to expose")
 )
 
