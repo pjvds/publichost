@@ -19,8 +19,13 @@ func NewWriteStreamHandler(tunnel Tunnel) MessageHandler {
 }
 
 func (h *WriteStreamHandler) Handle(response ResponseWriter, m *message.Message) error {
+    log.Debug("handling write stream request: %v", m)
+
     streamId := stream.ParseId(m.Body[0:4])
     data := m.Body[4:]
+
+    log.Debug("stream id: %v", streamId)
+    log.Debug("data: %v bytes", len(data))
 
     n, err := h.tunnel.WriteStream(streamId, data)
 

@@ -2,6 +2,7 @@ package stream
 
 import (
 	"encoding/binary"
+    "io"
 )
 
 // The identifier of a stream.
@@ -18,4 +19,9 @@ func (i Id) Bytes() []byte {
 func ParseId(body []byte) Id {
 	id := binary.BigEndian.Uint32(body)
 	return Id(id)
+}
+
+func ReadId(r io.Reader) (id Id, err error) {
+    err = binary.Read(r, binary.BigEndian, id)
+    return
 }

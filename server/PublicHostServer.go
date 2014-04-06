@@ -7,6 +7,7 @@ import (
 	pnet "github.com/pjvds/publichost/net"
 	"net"
 	"net/http"
+	"bytes"
 )
 
 type PublicHostServer interface {
@@ -95,18 +96,28 @@ func (p *publicHostServer) serveHttp() error {
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			log.Debug("opened stream\n")
 
 			stream := tunnel.NewTunneledStream(id, t)
-			req.Write(stream)
+			var buffer bytes.Buffer
+			req.Write(&buffer)
+
+			if _, err = stream.Write(buffer.Bytes()); err != nil {
+				log.Debug("error written stream: %v", err)
+				rw.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			log.Debug("written stream")
 
 			bufReader := bufio.NewReader(stream)
-
 			response, err := http.ReadResponse(bufReader, req)
 			if err != nil {
 				log.Error("error reading response from tunneled stream: %v", err)
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			log.Debug("read response")
 
 			conn, readWriter, _ := rw.(http.Hijacker).Hijack()
 			defer conn.Close()

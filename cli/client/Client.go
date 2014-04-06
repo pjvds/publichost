@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net"
 	"github.com/pjvds/publichost/tunnel"
+	"fmt"
 )
 
 var (
@@ -19,6 +20,9 @@ func main() {
 		log.Fatal(err)
 	}
 	defer conn.Close()
+
+	fmt.Printf("publichost - v0.1\n")
+	fmt.Printf("local address: %v\n", *localAddress)
 
 	host := tunnel.NewBackendHost(conn, *localAddress)
 	if err := host.Serve(); err != nil {

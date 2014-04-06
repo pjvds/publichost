@@ -45,8 +45,11 @@ func (t *frondend) OpenStream(network, address string) (id stream.Id, err error)
 func (t *frondend) ReadStream(id stream.Id, p []byte) (n int, err error) {
 	var response *message.Message
 
+	buffer := bytes.NewBuffer(id.Bytes())
+	binary.Write(buffer, message.ByteOrder, uint32(len(p)))
+
 	// TODO: use difference sequence
-	request := message.NewMessage(message.OpReadStream, uint64(t.messageSequence.Next()), id.Bytes())
+	request := message.NewMessage(message.OpReadStream, uint64(t.messageSequence.Next()), buffer.Bytes())
 	if response, err = t.conn.SendRequest(request); err != nil {
 		return
 	}
@@ -71,7 +74,7 @@ func (t *frondend) WriteStream(id stream.Id, p []byte) (n int, err error) {
 	body.Write(id.Bytes())
 	body.Write(p)
 
-	request := message.NewMessage(message.OpReadStream, uint64(t.messageSequence.Next()), body.Bytes())
+	request := message.NewMessage(message.OpWriteStream, uint64(t.messageSequence.Next()), body.Bytes())
 	if response, err = t.conn.SendRequest(request); err != nil {
 		return
 	}

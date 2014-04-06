@@ -34,7 +34,7 @@ func (r *responseWriter) Ack(body []byte) (err error) {
 
 func (r *responseWriter) Nack(e error) (err error) {
 	log.Debug("nacking to correlation id %v: %v", r.correlationId, e)
-	m := message.NewMessage(message.Nack, r.correlationId, []byte(err.Error()))
+	m := message.NewMessage(message.Nack, r.correlationId, []byte(e.Error()))
 	
 	if err = r.writer.Write(m); err != nil {
 		log.Debug("unable to write nack response: %v", err)

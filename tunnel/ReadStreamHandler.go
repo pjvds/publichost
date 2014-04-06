@@ -4,6 +4,8 @@ import (
 	"github.com/op/go-logging"
 	"github.com/pjvds/publichost/net/message"
 	"github.com/pjvds/publichost/stream"
+	"bytes"
+	"encoding/binary"
 )
 
 type ReadStreamHandler struct {
@@ -19,10 +21,18 @@ func NewReadStreamHandler(tunnel Tunnel) MessageHandler {
 }
 
 func (h *ReadStreamHandler) Handle(response ResponseWriter, m *message.Message) error {
-	streamId := stream.ParseId(m.Body)
+	log.Debug("handling read stream request: %v", m.String())
+	
+	buffer := bytes.NewBuffer(m.Body)
+	streamId, err := stream.ReadId(buffer)
+	log.Debug("stream id: %v", streamId)
 
-	p := make([]byte, 4098)
+	var size uint32
+	binary.Read(buffer, message.ByteOrder, &size)
+	p := make([]byte, size)
 	n, err := h.tunnel.ReadStream(streamId, p)
+
+	log.Debug("read %v bytes", n)
 
 	if err != nil {
 		return response.Nack(err)

@@ -29,6 +29,7 @@ func NewBackendHost(conn io.ReadWriteCloser, localAddress string) Host {
 	h.handlers[message.OpOpenStream] = NewOpenStreamHandler(h.tunnel, localAddress)
 	h.handlers[message.OpCloseStream] = NewCloseStreamHandler(h.tunnel)
 	h.handlers[message.OpWriteStream] = NewWriteStreamHandler(h.tunnel)
+	h.handlers[message.OpReadStream] = NewReadStreamHandler(h.tunnel)
 
 	h.LocalAddress = localAddress
 

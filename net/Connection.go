@@ -71,6 +71,7 @@ func (c *clientConnection) serveOutgoing() error {
 
 	for {
 		r := <-c.outgoing
+
 		if r != nil {
 			if err := c.writer.Write(r.request); err != nil {
 				r.Error <- err
@@ -99,12 +100,18 @@ func (c *clientConnection) SendRequest(request *message.Message) (response *mess
 		Response: make(chan *message.Message, 1),
 		Error:    make(chan error),
 	}
+	c.outstandingRequests[request.CorrelationId] = r
+	defer delete(c.outstandingRequests, request.CorrelationId)
+
 	c.outgoing <- r
+	log.Debug("send request %v", request.String())
 
 	select {
 	case response = <-r.Response:
+		log.Debug("received response: %v", response.String())
 		return
 	case err = <-r.Error:
+		log.Debug("error: %v", response.String())
 		return
 	}
 }
