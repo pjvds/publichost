@@ -25,6 +25,10 @@ func (h *ReadStreamHandler) Handle(response ResponseWriter, m *message.Message) 
 	
 	buffer := bytes.NewBuffer(m.Body)
 	streamId, err := stream.ReadId(buffer)
+	if err != nil {
+		return response.Nack(err)
+	}
+
 	log.Debug("stream id: %v", streamId)
 
 	var size uint32
@@ -32,7 +36,7 @@ func (h *ReadStreamHandler) Handle(response ResponseWriter, m *message.Message) 
 	p := make([]byte, size)
 	n, err := h.tunnel.ReadStream(streamId, p)
 
-	log.Debug("read %v bytes", n)
+	log.Debug("read %v bytes into %v bytes buffer", n, size)
 
 	if err != nil {
 		return response.Nack(err)

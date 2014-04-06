@@ -22,6 +22,11 @@ func ParseId(body []byte) Id {
 }
 
 func ReadId(r io.Reader) (id Id, err error) {
-    err = binary.Read(r, binary.BigEndian, id)
+    var value uint32
+    if err = binary.Read(r, binary.BigEndian, &value); err != nil {
+        return
+    }
+
+    id = Id(value)
     return
 }

@@ -57,6 +57,12 @@ func (t *frondend) ReadStream(id stream.Id, p []byte) (n int, err error) {
 	switch response.TypeId {
 	case message.Ack:
 		id = stream.Id(binary.BigEndian.Uint32(response.Body))
+		n = len(response.Body)
+
+		for k, v := range response.Body {
+			p[k]=v
+		}
+
 	case message.Nack:
 		err = errors.New(string(response.Body))
 	default:

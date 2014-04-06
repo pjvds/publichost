@@ -127,7 +127,12 @@ func (p *publicHostServer) serveHttp() error {
 				return
 			}
 
-			rw.WriteHeader(http.StatusInternalServerError)
+			if err := readWriter.Flush(); err != nil {
+				log.Error("error flushing response to remote: %v", err)
+				return
+			}
+
+			log.Debug("done")
 		} else {
 			rw.WriteHeader(http.StatusNotFound)
 		}
