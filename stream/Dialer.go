@@ -16,5 +16,17 @@ func NewDialer() Dialer {
 }
 
 func (n *netDialer) Dial(network, address string) (s Stream, err error) {
-	return net.Dial(network, address)
+	var conn *net.TCPConn
+    var raddr *net.TCPAddr
+
+    if raddr, err = net.ResolveTCPAddr(network, address); err != nil {
+        return
+    }
+
+    if conn, err = net.DialTCP("tcp", nil, raddr); err != nil {
+        return
+    }
+
+    s = conn
+    return
 }

@@ -96,6 +96,7 @@ func (p *publicHostServer) serveHttp() error {
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			defer t.CloseStream(id)
 			log.Debug("opened stream\n")
 
 			stream := tunnel.NewTunneledStream(id, t)

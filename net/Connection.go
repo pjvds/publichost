@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 type ClientConnection interface {
@@ -33,8 +34,8 @@ type clientConnection struct {
 	outgoing chan *roundtrip
 }
 
-func Dial(address string) (c ClientConnection, err error) {
-	conn, err := net.Dial("tcp", address)
+func Dial(address string, timeout time.Duration) (c ClientConnection, err error) {
+	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -43,11 +44,31 @@ func Dial(address string) (c ClientConnection, err error) {
 	return
 }
 
+type timeoutWrapper struct{
+	conn net.Conn
+	timeout time.Duration
+}
+
+func (t *timeoutWrapper) Write(p []byte) (n int, err error) {
+	// absolute time after which I/O operations fail with a timeout instead of blocking
+	if err = t.conn.SetWriteDeadline(time.Now().Add(t.timeout)); err != nil {
+		log.Error("error setting read deadline on connection: %v", err)
+		return
+	}
+	n, err = t.conn.Write(p)
+	return
+}
+
 func NewClientConnection(conn net.Conn) (c ClientConnection) {
+	timeoutWrapper := &timeoutWrapper{
+		timeout: time.Second,
+		conn: conn,
+	}
+
 	c = &clientConnection{
 		conn:   conn,
 		reader: message.NewReader(conn),
-		writer: message.NewWriter(conn),
+		writer: message.NewWriter(timeoutWrapper),
 
 		wg: &sync.WaitGroup{},
 
@@ -85,11 +106,19 @@ func (c *clientConnection) serveIncomming() (err error) {
 	for {
 		var response *message.Message
 		if response, err = c.reader.Read(); err != nil {
+			if neterr, ok := err.(net.Error); ok && neterr.Temporary() {
+				log.Warning("temporary error reading connection: %v", err)
+				continue
+			}
+			log.Fatalf("error reading connection: %v", err)
 			return
 		}
 
 		if r, ok := c.outstandingRequests[response.CorrelationId]; ok {
+			log.Debug("received message for known request: %v", response.CorrelationId)
 			r.Response <- response
+		} else {
+			log.Debug("received message for unknown request: %v", response.CorrelationId)
 		}
 	}
 }

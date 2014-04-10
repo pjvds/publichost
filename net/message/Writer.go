@@ -22,6 +22,14 @@ func NewWriter(r io.Writer) Writer {
 }
 
 func (b *bufferedWriter) Write(m *Message) (err error) {
+	defer func() {
+		if err != nil {
+			log.Debug("error writing message %v: %v", m, err)
+		} else {
+			log.Debug("message written: %v", m)
+		}
+	}()
+
 	length := uint16(len(m.Body))
 
 	if err = binary.Write(b.writer, ByteOrder, m.TypeId); err != nil {
