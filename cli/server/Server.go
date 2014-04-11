@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/pjvds/publichost/server"
     "github.com/yvasiyarov/gorelic"
+    "net/http"
 )
 
 var (
@@ -15,8 +16,9 @@ var (
 func main() {
 	flag.Parse()
 
+    var agent *gorelic.Agent
     if *newrelic != "" {
-        agent := gorelic.NewAgent()
+        agent = gorelic.NewAgent()
         agent.Verbose = false
         agent.NewrelicLicense = *newrelic
         agent.Run()
@@ -25,7 +27,14 @@ func main() {
 	println("publichost - v0.1")
 	println("hosting at: " + *address)
 
-	if err := server.ListenAndServe(*address, *hostname); err != nil {
+    s, err := server.NewServer(*address, *hostname)
+	if err != nil {
 		println("err: " + err.Error())
 	}
+
+    if agent != nil {
+        s = agent.WrapHTTPHandler(s)
+    }
+
+    http.ListenAndServe(*address, s)
 }
