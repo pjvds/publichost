@@ -9,13 +9,7 @@ import (
 	"bufio"
 	"math/rand"
 	"fmt"
-	"github.com/gorilla/handlers"
-	"os"
 )
-
-type PublicHostServer interface {
-	Serve() error
-}
 
 type publicHostServer struct {
 	listener net.Listener
@@ -25,27 +19,34 @@ type publicHostServer struct {
 	mux *http.ServeMux
 }
 
-func ListenAndServe(address string, hostname string) (err error) {
-
-	server := publicHostServer{
+func NewServer(address, hostname string) (server http.Handler, err error) {
+	s := publicHostServer{
 		hostname: hostname,
 		tunnels: make(map[string]tunnel.Tunnel),
 		mux: http.NewServeMux(),
 	}
-	server.mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
+	s.mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		// All requests marked with X-PUBLICHOST header
 		if req.Header.Get("X-PUBLICHOST") == "true" ||
 		   req.Header.Get("X-PUBLICHOST") == "1" {
-			server.handleConnectRequests(rw, req)
+			s.handleConnectRequests(rw, req)
 			return
 		}
 
-		server.handlePotentialTunnelRequest(rw, req)
+		s.handlePotentialTunnelRequest(rw, req)
 		return
 	})
 
-	logHandler := handlers.CombinedLoggingHandler(os.Stdout, server.mux)
-	return http.ListenAndServe(address, logHandler)
+	server = s.mux
+	return 
+}
+
+func ListenAndServe(address string, hostname string) (err error) {
+	var server http.Handler
+	if server, err = NewServer(address, hostname); err != nil {
+		return
+	}
+	return http.ListenAndServe(address, server)
 }
 
 func (p *publicHostServer) handleConnectRequests(rw http.ResponseWriter, req *http.Request) {
@@ -146,7 +147,7 @@ func (p *publicHostServer) handlePotentialTunnelRequest(rw http.ResponseWriter, 
 
 	stream := tunnel.NewTunneledStream(id, t)
 	if err = req.Write(stream); err != nil {
-		log.Error("cannot write request %v: %v", req, err)
+		log.Error("cannot write request: %v", err)
 		http.Error(rw, err.Error(), http.StatusRequestTimeout)
 		return
 	}
