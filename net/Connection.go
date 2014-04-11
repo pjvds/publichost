@@ -62,7 +62,7 @@ func (t *timeoutWrapper) Write(p []byte) (n int, err error) {
 
 func NewClientConnection(conn net.Conn) (c ClientConnection) {
 	timeoutWrapper := &timeoutWrapper{
-		timeout: time.Second,
+		timeout: 30 * time.Second,
 		conn: conn,
 	}
 
@@ -143,7 +143,7 @@ func (c *clientConnection) SendRequest(request *message.Message) (response *mess
 	case err = <-r.Error:
 		log.Debug("error: %v", response.String())
 		return
-	case <-time.After(5 * time.Second):
+	case <-time.After(30 * time.Second):
 		log.Warning("timeout: %v", request)
 		err = errors.New("timeout")
 		return
