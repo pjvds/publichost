@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"math/rand"
 	"fmt"
+	"io"
 )
 
 type publicHostServer struct {
@@ -164,7 +165,10 @@ func (p *publicHostServer) handlePotentialTunnelRequest(rw http.ResponseWriter, 
 	}
 
 	log.Debug("read response")
-	response.Write(rw)
+	if _, err := io.Copy(rw, response.Body); err != nil {
+		log.Error("cannot copy body: %v", err)
+		return
+	}
 
 	log.Debug("done")
 }
