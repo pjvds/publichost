@@ -33,7 +33,10 @@ func (b *bufferedReader) Read() (m *Message, err error) {
 	}
 
 	if firstByte != MagicStart {
-		log.Debug("first byte missmatch: got %v, expected %v", firstByte, MagicStart)		
+		log.Warning("first byte missmatch: got %v, expected %v", firstByte, MagicStart)		
+		if err = b.readUntilMessageStart(); err != nil {
+			return
+		}
 	}
 
 	if err = binary.Read(b.reader, ByteOrder, &typeId); err != nil {
