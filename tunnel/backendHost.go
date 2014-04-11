@@ -93,7 +93,7 @@ func NewBackendHost(address string) (host Host, err error) {
 
 	h := &backendHost{
 		conn:     conn,
-		reader:   message.NewReader(conn),
+		reader:   message.NewReader(bufio.NewReader(conn)),
 		writer:   message.NewWriter(conn),
 		tunnel:   NewTunnelBackend(),
 		handlers: make(map[byte]MessageHandler),

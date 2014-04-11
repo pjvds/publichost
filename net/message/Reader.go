@@ -3,7 +3,6 @@ package message
 import (
 	"bufio"
 	"encoding/binary"
-	"io"
 )
 
 type Reader interface {
@@ -14,10 +13,9 @@ type bufferedReader struct {
 	reader *bufio.Reader
 }
 
-func NewReader(r io.Reader) Reader {
-	reader := bufio.NewReader(r)
+func NewReader(r *bufio.Reader) Reader {
 	return &bufferedReader{
-		reader: reader,
+		reader: r,
 	}
 }
 

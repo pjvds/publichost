@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 	"errors"
+	"bufio"
 )
 
 type ClientConnection interface {
@@ -68,7 +69,7 @@ func NewClientConnection(conn net.Conn) (c ClientConnection) {
 
 	c = &clientConnection{
 		conn:   conn,
-		reader: message.NewReader(conn),
+		reader: message.NewReader(bufio.NewReader(conn)),
 		writer: message.NewWriter(timeoutWrapper),
 
 		wg: &sync.WaitGroup{},
