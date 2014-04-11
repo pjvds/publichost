@@ -49,6 +49,10 @@ func connect(address string) (conn net.Conn, err error) {
 	if err = tcpConn.SetLinger(5); err != nil {
 		return
 	}
+	if err = tcpConn.SetNoDelay(true); err != nil {
+		return
+	}
+
 	conn = tcpConn
 
 	defer func() {
