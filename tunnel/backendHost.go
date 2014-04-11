@@ -23,6 +23,8 @@ type backendHost struct {
 }
 
 func connect(address string) (conn net.Conn, err error) {
+	log.Debug("connecting to host", conn.RemoteAddr())
+
 	var req *http.Request
 	var response *http.Response
 
@@ -37,6 +39,8 @@ func connect(address string) (conn net.Conn, err error) {
 	if conn, err = net.Dial("tcp4", address); err != nil {
 		return
 	}
+
+	log.Debug("connection accepted")
 
 	var resolved *net.TCPAddr
 	var tcpConn *net.TCPConn
@@ -70,18 +74,21 @@ func connect(address string) (conn net.Conn, err error) {
 		return
 	}
 	conn.SetWriteDeadline(time.Time{})
-
+	log.Debug("written request")
 
 	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 	if response, err = http.ReadResponse(bufRW.Reader, req); err != nil {
 		return
 	}
 	conn.SetReadDeadline(time.Time{})
+	log.Debug("read response")
 
 	if response.StatusCode != 200 {
 		err = fmt.Errorf("Unexpected response: %v", response.StatusCode)
 		return
 	}
+
+	log.Debug("connected succesfully")
 	return
 }
 
