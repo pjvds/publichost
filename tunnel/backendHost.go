@@ -22,7 +22,7 @@ type backendHost struct {
 	handlers map[byte]MessageHandler
 }
 
-func connect(address string) (conn net.Conn, bufRW *bufio.ReadWriter, err error) {
+func connect(address string) (conn net.Conn, err error) {
 	var req *http.Request
 	var response *http.Response
 
@@ -43,7 +43,7 @@ func connect(address string) (conn net.Conn, bufRW *bufio.ReadWriter, err error)
 		}
 	}()
 
-	bufRW = bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	bufRW := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 	conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
 	if err = req.Write(bufRW); err != nil {
 		return
@@ -69,14 +69,9 @@ func connect(address string) (conn net.Conn, bufRW *bufio.ReadWriter, err error)
 
 func NewBackendHost(address string) (host Host, err error) {
 	var conn net.Conn
-	var bufRW *bufio.ReadWriter
-
-	if conn, bufRW, err = connect(address); err != nil {
+	if conn, err = connect(address); err != nil {
 		return
 	}
-	bufRW.Reader = nil 
-	bufRW.Writer = nil 
-	bufRW = nil 
 
 	h := &backendHost{
 		conn:     conn,
