@@ -22,10 +22,19 @@ func NewReader(r io.Reader) Reader {
 }
 
 func (b *bufferedReader) Read() (m *Message, err error) {
+	var firstByte byte
 	var typeId byte
 	var correlationId uint64
 	var length uint16
 	var body []byte
+
+	if err = binary.Read(b.reader, ByteOrder, &firstByte); err != nil {
+		return
+	}
+
+	if firstByte != MagicStart {
+		log.Debug("first byte missmatch: got %v, expected %v", firstByte, MagicStart)		
+	}
 
 	if err = binary.Read(b.reader, ByteOrder, &typeId); err != nil {
 		return
@@ -47,5 +56,20 @@ func (b *bufferedReader) Read() (m *Message, err error) {
 		CorrelationId: correlationId,
 		Body:          body,
 	}
+	return
+}
+
+func (b *bufferedReader) readUntilMessageStart() (err error){
+	var firstByte byte
+	if firstByte, err = b.reader.ReadByte(); err != nil{
+		return
+	}
+
+	for firstByte != MagicStart {
+		if firstByte, err = b.reader.ReadByte(); err != nil{
+			return
+		}	
+	}
+
 	return
 }

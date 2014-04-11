@@ -7,6 +7,7 @@ import (
 	"github.com/pjvds/publichost/net/message"
 	"github.com/pjvds/publichost/stream"
 	"bytes"
+	"fmt"
 )
 
 type frondend struct {
@@ -73,6 +74,11 @@ func (t *frondend) ReadStream(id stream.Id, p []byte) (n int, err error) {
 }
 
 func (t *frondend) WriteStream(id stream.Id, p []byte) (n int, err error) {
+	if len(p) == 0 {
+		log.Warning("requested to write zero bytes to stream id: %v", id)
+		return
+	}
+
 	var response *message.Message
 
 	// TODO: use difference sequence
@@ -87,7 +93,12 @@ func (t *frondend) WriteStream(id stream.Id, p []byte) (n int, err error) {
 
 	switch response.TypeId {
 	case message.Ack:
-		p = response.Body
+		n = int(message.ByteOrder.Uint32(response.Body))
+
+		if n != len(p) {
+			err = fmt.Errorf("write result mismatch: got %v, expected %v", n, len(p))
+			return
+		}
 	case message.Nack:
 		err = errors.New(string(response.Body))
 	default:

@@ -5,6 +5,10 @@ import (
 	"github.com/pjvds/publichost/net/message"
 	"io"
 	"fmt"
+	"net/http"
+	"net"
+	"bufio"
+	"time"
 )
 
 type backendHost struct {
@@ -18,7 +22,62 @@ type backendHost struct {
 	handlers map[byte]MessageHandler
 }
 
-func NewBackendHost(conn io.ReadWriteCloser, localAddress string) Host {
+func connect(address string) (conn net.Conn, bufRW *bufio.ReadWriter, err error) {
+	var req *http.Request
+	var response *http.Response
+
+	if req, err = http.NewRequest("CONNECT", "/", nil); err != nil {
+		return
+	}
+
+	req.Header.Add("X-PUBLICHOST", "true")
+	req.Header.Add("X-PUBLICHOST-VERSION", "0.1")
+	req.Header.Add("Keep-Alive", "")
+
+	if conn, err = net.Dial("tcp", address); err != nil {
+		return
+	}
+	defer func() {
+		if err != nil {
+			conn.Close()
+		}
+	}()
+
+	bufRW = bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
+	if err = req.Write(bufRW); err != nil {
+		return
+	}
+	if err = bufRW.Flush(); err != nil {
+		return
+	}
+	conn.SetWriteDeadline(time.Time{})
+
+
+	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	if response, err = http.ReadResponse(bufRW.Reader, req); err != nil {
+		return
+	}
+	conn.SetReadDeadline(time.Time{})
+
+	if response.StatusCode != 200 {
+		err = fmt.Errorf("Unexpected response: %v", response.StatusCode)
+		return
+	}
+	return
+}
+
+func NewBackendHost(address string) (host Host, err error) {
+	var conn net.Conn
+	var bufRW *bufio.ReadWriter
+
+	if conn, bufRW, err = connect(address); err != nil {
+		return
+	}
+	bufRW.Reader = nil 
+	bufRW.Writer = nil 
+	bufRW = nil 
+
 	h := &backendHost{
 		conn:     conn,
 		reader:   message.NewReader(conn),
@@ -26,24 +85,20 @@ func NewBackendHost(conn io.ReadWriteCloser, localAddress string) Host {
 		tunnel:   NewTunnelBackend(),
 		handlers: make(map[byte]MessageHandler),
 	}
-	h.handlers[message.OpOpenStream] = NewOpenStreamHandler(h.tunnel, localAddress)
+	h.handlers[message.OpOpenStream] = NewOpenStreamHandler(h.tunnel)
 	h.handlers[message.OpCloseStream] = NewCloseStreamHandler(h.tunnel)
 	h.handlers[message.OpWriteStream] = NewWriteStreamHandler(h.tunnel)
 	h.handlers[message.OpReadStream] = NewReadStreamHandler(h.tunnel)
 
-	h.LocalAddress = localAddress
-
-	return h
+	host = h
+	return
 }
 
-func (h *backendHost) Serve() (err error) {
-	defer h.conn.Close()
-
-	var request *message.Message
+func (h *backendHost) OpenTunnel(localAddress string) (hostname string, err error) {
 	var response *message.Message
 
-	openTunnel := message.NewMessage(message.OpOpenTunnel, 1, []byte(h.LocalAddress))
-	if err = h.writer.Write(openTunnel); err != nil {
+	request := message.NewMessage(message.OpOpenTunnel, 1, []byte(localAddress))
+	if err = h.writer.Write(request); err != nil {
 		log.Debug("unable to write handshake message: %v", err)
 		return
 	}
@@ -59,13 +114,17 @@ func (h *backendHost) Serve() (err error) {
 		return
 	}
 
+	hostname = string(response.Body)
+
 	log.Debug("tunnel opened successfully")
+	return
+}
+
+func (h *backendHost) Serve() (err error) {
+	var request *message.Message
 
 	for {
 		if request, err = h.reader.Read(); err != nil {
-			if err != io.EOF {
-				err = nil
-			}
 			break
 		}
 

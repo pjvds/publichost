@@ -6,6 +6,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"errors"
 )
 
 type ClientConnection interface {
@@ -95,6 +96,7 @@ func (c *clientConnection) serveOutgoing() error {
 
 		if r != nil {
 			if err := c.writer.Write(r.request); err != nil {
+				log.Warning("error writing request: %v", err)
 				r.Error <- err
 				continue
 			}
@@ -115,10 +117,9 @@ func (c *clientConnection) serveIncomming() (err error) {
 		}
 
 		if r, ok := c.outstandingRequests[response.CorrelationId]; ok {
-			log.Debug("received message for known request: %v", response.CorrelationId)
 			r.Response <- response
 		} else {
-			log.Debug("received message for unknown request: %v", response.CorrelationId)
+			log.Warning("received message for unknown request: %v", response.CorrelationId)
 		}
 	}
 }
@@ -141,6 +142,10 @@ func (c *clientConnection) SendRequest(request *message.Message) (response *mess
 		return
 	case err = <-r.Error:
 		log.Debug("error: %v", response.String())
+		return
+	case <-time.After(5 * time.Second):
+		log.Warning("timeout: %v", request)
+		err = errors.New("timeout")
 		return
 	}
 }

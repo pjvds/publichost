@@ -16,6 +16,10 @@ const (
 	Nack          = byte(iota)
 )
 
+const (
+	MagicStart = byte(42)
+)
+
 var (
 	ByteOrder = binary.BigEndian
 )

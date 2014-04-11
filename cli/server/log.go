@@ -9,5 +9,7 @@ var (
 )
 
 func init() {
+    //logging.SetLevel(logging.INFO, "")
 	log = logging.MustGetLogger("main")
 }
+
