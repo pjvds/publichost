@@ -52,11 +52,14 @@ func (b *bufferedReader) Read() (m *Message, err error) {
 		return
 	}
 
+
 	m = &Message{
 		TypeId:        typeId,
 		CorrelationId: correlationId,
 		Body:          body,
 	}
+	log.Debug("message received: %v", m)
+
 	return
 }
 
