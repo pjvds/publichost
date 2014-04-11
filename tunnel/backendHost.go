@@ -37,6 +37,20 @@ func connect(address string) (conn net.Conn, err error) {
 	if conn, err = net.Dial("tcp4", address); err != nil {
 		return
 	}
+
+	var resolved *net.TCPAddr
+	var tcpConn *net.TCPConn
+	if resolved, err = net.ResolveTCPAddr("tcp", address); err != nil {
+		return
+	}
+	if tcpConn, err = net.DialTCP("tcp", nil, resolved); err != nil {
+		return
+	}
+	if err = tcpConn.SetLinger(5); err != nil {
+		return
+	}
+	conn = tcpConn
+
 	defer func() {
 		if err != nil {
 			conn.Close()
