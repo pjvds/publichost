@@ -19,8 +19,9 @@ func main() {
     var agent *gorelic.Agent
     if *newrelic != "" {
         agent = gorelic.NewAgent()
-        agent.Verbose = false
+        agent.Verbose = true
         agent.NewrelicLicense = *newrelic
+        agent.NewrelicName = "publichost server"
         agent.Run()
     }
 
