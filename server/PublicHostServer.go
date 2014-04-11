@@ -110,6 +110,12 @@ func (p *publicHostServer) serveTunnel(conn net.Conn, bufRW *bufio.ReadWriter) {
 		conn.Close()
 		return
 	}
+	if err := bufRW.Flush(); err != nil {
+		log.Debug("error flushing writer: %v", err)
+		conn.Close()
+		return
+	}
+
 
 	p.tunnels[hostname] = tunnel.NewFrondend(pnet.NewClientConnection(conn))
 	log.Info("opened new tunnel at: %v", hostname)
