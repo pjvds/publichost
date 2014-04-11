@@ -34,7 +34,7 @@ func connect(address string) (conn net.Conn, bufRW *bufio.ReadWriter, err error)
 	req.Header.Add("X-PUBLICHOST-VERSION", "0.1")
 	req.Header.Add("Keep-Alive", "")
 
-	if conn, err = net.Dial("tcp", address); err != nil {
+	if conn, err = net.Dial("tcp4", address); err != nil {
 		return
 	}
 	defer func() {
