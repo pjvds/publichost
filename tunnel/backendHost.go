@@ -88,7 +88,7 @@ func connect(address string) (conn net.Conn, err error) {
 		return
 	}
 
-	log.Debug("connected succesfully")
+	log.Debug("connect succesfully")
 	return
 }
 
@@ -116,6 +116,7 @@ func NewBackendHost(address string) (host Host, err error) {
 
 func (h *backendHost) OpenTunnel(localAddress string) (hostname string, err error) {
 	var response *message.Message
+	log.Debug("OPEN TUNNEL")
 
 	request := message.NewMessage(message.OpOpenTunnel, 1, []byte(localAddress))
 	if err = h.writer.Write(request); err != nil {
@@ -123,10 +124,13 @@ func (h *backendHost) OpenTunnel(localAddress string) (hostname string, err erro
 		return
 	}
 
+	log.Debug("WAITING RESPONSE")
 	if response, err = h.reader.Read(); err != nil {
 		log.Debug("unable to read response to handshake: %v", err)
 		return
 	}
+
+	log.Debug("RESPONSE RECEIVED")
 
 	if response.TypeId == message.Nack {
 		err = errors.New(string(response.Body))

@@ -20,7 +20,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-		
 
 	hostname, err := host.OpenTunnel(*localAddress)
 	if err != nil {
