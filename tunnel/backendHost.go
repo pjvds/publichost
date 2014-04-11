@@ -48,7 +48,7 @@ func connect(address string) (conn net.Conn, err error) {
 	if err = req.Write(bufRW); err != nil {
 		return
 	}
-	if err = bufRW.Flush(); err != nil {
+	if err = bufRW.Writer.Flush(); err != nil {
 		return
 	}
 	conn.SetWriteDeadline(time.Time{})
