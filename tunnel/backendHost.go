@@ -23,7 +23,7 @@ type backendHost struct {
 }
 
 func connect(address string) (conn net.Conn, err error) {
-	log.Debug("connecting to host", conn.RemoteAddr())
+	log.Debug("connecting to host", address)
 
 	var req *http.Request
 	var response *http.Response
