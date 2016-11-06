@@ -24,7 +24,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "publichost, p",
-			Value:  "api.publichost.io",
+			Value:  "api.publichost.me:80",
 			Usage:  "the address of the publichost server",
 			EnvVar: "PUBLICHOST",
 		},
