@@ -126,6 +126,7 @@ func main() {
 
 		go http.ListenAndServe(httpAddress, http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			potentialId := subdomain.FindString(request.Host)
+			log.Printf("handling incoming request %v->%v\n", request.Host, potentialId)
 			if len(potentialId) == 0 {
 				log.Println("missing tunnel id")
 				response.Write([]byte("<html><body>missing tunnel id</body></html>"))
