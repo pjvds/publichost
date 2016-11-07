@@ -24,20 +24,20 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "publichost, p",
-			Value:  "api.publichost.me:80",
+			Value:  "",
 			Usage:  "the address of the publichost server",
 			EnvVar: "PUBLICHOST",
 		},
 	}
 	app.Action = func(ctx *cli.Context) {
 		localUrl := ctx.String("url")
-		server := ctx.String("publichost")
 
 		log.Println("connecting to server")
-		conn, err := net.Dial("tcp", server)
+		conn, err := net.Dial("tcp", "api.publichost.io:80")
 		if err != nil {
 			log.Fatal(err.Error())
 		}
+		conn.Write([]byte("GET /\nHost: api.publichost.io"))
 
 		log.Println("opening tunnel")
 		reader := bufio.NewReader(conn)

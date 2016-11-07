@@ -63,12 +63,20 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 		if err != nil {
 			return err
 		}
-		log.Printf("connection accepted %v\n", conn.RemoteAddr())
 
 		// perform handshake
 		go func(conn net.Conn, id int) {
+			log.Printf("connection accepted %v\n", conn.RemoteAddr())
+
 			hostname := fmt.Sprintf("%v.%v", id, publicHostname)
 			publicAddress := fmt.Sprintf("http://%v", hostname)
+
+			reader := bufio.NewReader(conn)
+			_, err := http.ReadRequest(reader)
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
 
 			if _, err := conn.Write([]byte(publicAddress + "\n")); err != nil {
 				log.Println(err.Error())
