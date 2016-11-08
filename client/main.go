@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
 	"log"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -33,11 +33,13 @@ func main() {
 		localUrl := ctx.String("url")
 
 		log.Println("connecting to server")
-		conn, err := net.Dial("tcp", "api.publichost.io:80")
+		conn, err := tls.Dial("tcp", "api.publichost.io:443", nil)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		conn.Write([]byte("GET /\nHost: api.publichost.io"))
+		if _, err := conn.Write([]byte("GET /tunnel HTTP/1.1\r\nHost: api.publichost.io\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n")); err != nil {
+			log.Fatal(err.Error())
+		}
 
 		log.Println("opening tunnel")
 		reader := bufio.NewReader(conn)

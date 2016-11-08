@@ -79,7 +79,7 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 				return
 			}
 
-			if _, err := conn.Write([]byte("HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nTransfer-Encoding: chunked\r\nX-Publichost-Address: " + publicAddress + "\r\n\r\n")); err != nil {
+			if _, err := conn.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\nX-Publichost-Address: " + publicAddress + "\r\n\r\n")); err != nil {
 				log.Println(err.Error())
 				return
 			}
