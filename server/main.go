@@ -126,7 +126,7 @@ func main() {
 		}
 
 		accepted := make(chan TunnelSession)
-		go Accept(accepted, "localhost:8080", listener)
+		go Accept(accepted, "publichost.me", listener)
 
 		var tunnelsLock sync.RWMutex
 		tunnels := make(map[int]TunnelSession)
