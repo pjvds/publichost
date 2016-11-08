@@ -65,10 +65,10 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 			return err
 		}
 
+		log.Printf("connection accepted %v\n", conn.RemoteAddr())
+
 		// perform handshake
 		go func(conn net.Conn, id int) {
-			log.Printf("connection accepted %v\n", conn.RemoteAddr())
-
 			hostname := fmt.Sprintf("%v.%v", id, publicHostname)
 			publicAddress := fmt.Sprintf("http://%v", hostname)
 
