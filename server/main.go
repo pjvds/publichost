@@ -61,6 +61,7 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 	for id := 0; ; id++ {
 		conn, err := listener.Accept()
 		if err != nil {
+			log.Printf("FATAL: %v", err)
 			return err
 		}
 
