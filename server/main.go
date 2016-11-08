@@ -79,7 +79,7 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 				return
 			}
 
-			if _, err := conn.Write([]byte(publicAddress + "\n")); err != nil {
+			if _, err := conn.Write([]byte("HTTP/1.1 200 OK\r\nX-Publichost-Address: " + publicAddress + "\r\n\r\n")); err != nil {
 				log.Println(err.Error())
 				return
 			}
