@@ -43,12 +43,12 @@ func main() {
 
 		log.Println("opening tunnel")
 		reader := bufio.NewReader(conn)
-		line, err := reader.ReadString('\n')
+		response, err := http.ReadResponse(reader, nil)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		log.Print("tunnel available at: " + line)
+		log.Print("tunnel available at: " + response.Header.Get("X-Publichost-Address"))
 		tunnel, err := yamux.Server(conn, nil)
 		if err != nil {
 			log.Fatal(err.Error())
