@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 
 	"github.com/codegangsta/cli"
+	"github.com/gorilla/handlers"
 	"github.com/hashicorp/yamux"
 )
 
@@ -59,7 +61,9 @@ func main() {
 			log.Fatal(err.Error())
 		}
 
-		if err := http.Serve(tunnel, httputil.NewSingleHostReverseProxy(local)); err != nil {
+		handler := handlers.CombinedLoggingHandler(os.Stdout, httputil.NewSingleHostReverseProxy(local))
+
+		if err := http.Serve(tunnel, handler); err != nil {
 			log.Fatal(err.Error())
 		}
 	}
