@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"regexp"
-	"strconv"
 	"sync"
 
 	"github.com/codegangsta/cli"
@@ -18,7 +17,7 @@ import (
 
 type TunnelSession struct {
 	id            int
-	hostname      string
+	name          string
 	session       *yamux.Session
 	remoteAddress string
 }
@@ -135,33 +134,26 @@ func main() {
 		go Accept(accepted, "publichost.me", listener)
 
 		var tunnelsLock sync.RWMutex
-		tunnels := make(map[int]TunnelSession)
+		tunnels := make(map[string]TunnelSession)
 
 		subdomain := regexp.MustCompile("[A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])?")
 
 		go http.ListenAndServe(httpAddress, http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			potentialId := subdomain.FindString(request.Host)
-			log.Printf("handling incoming request %v->%v\n", request.Host, potentialId)
-			if len(potentialId) == 0 {
-				log.Println("missing tunnel id")
-				response.Write([]byte("<html><body>missing tunnel id</body></html>"))
-				return
-			}
-
-			id, err := strconv.Atoi(potentialId)
-			if err != nil {
-				log.Println("invalid tunnel id: " + err.Error())
-				response.Write([]byte("<html><body>invalid tunnel id: " + err.Error() + "</body></html>"))
+			name := subdomain.FindString(request.Host)
+			log.Printf("handling incoming request %v->%v\n", request.Host, name)
+			if len(name) == 0 {
+				log.Println("missing tunnel name")
+				response.Write([]byte("<html><body>missing tunnel name</body></html>"))
 				return
 			}
 
 			tunnelsLock.RLock()
-			tunnel, ok := tunnels[id]
+			tunnel, ok := tunnels[name]
 			tunnelsLock.RUnlock()
 
 			if !ok {
-				log.Printf("no tunnel with id %v", id)
-				response.Write([]byte("<html><body>no session found with id <strong>" + strconv.Itoa(id) + "</strong></body></html>"))
+				log.Printf("no tunnel with name: %v", name)
+				response.Write([]byte("<html><body>no session found with name <strong>" + name + "</strong></body></html>"))
 				return
 			}
 
@@ -170,7 +162,7 @@ func main() {
 
 		for session := range accepted {
 			tunnelsLock.Lock()
-			tunnels[session.id] = session
+			tunnels[session.name] = session
 			tunnelsLock.Unlock()
 		}
 	}
