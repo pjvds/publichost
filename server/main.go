@@ -12,11 +12,13 @@ import (
 	"sync"
 
 	"github.com/codegangsta/cli"
+	"github.com/dustinkirkland/golang-petname"
 	"github.com/hashicorp/yamux"
 )
 
 type TunnelSession struct {
 	id            int
+	hostname      string
 	session       *yamux.Session
 	remoteAddress string
 }
@@ -59,6 +61,7 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 	defer listener.Close()
 
 	for id := 0; ; id++ {
+
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Printf("FATAL: %v", err)
@@ -69,7 +72,9 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 
 		// perform handshake
 		go func(conn net.Conn, id int) {
-			hostname := fmt.Sprintf("%v.%v", id, publicHostname)
+			name := petname.Generate(2, "-")
+
+			hostname := fmt.Sprintf("%v.%v", name, publicHostname)
 			publicAddress := fmt.Sprintf("http://%v", hostname)
 
 			reader := bufio.NewReader(conn)
@@ -93,6 +98,7 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 			log.Printf("tunnel created %v->%v\n", publicAddress, conn.RemoteAddr())
 			accepted <- TunnelSession{
 				id,
+				name,
 				session,
 				publicAddress,
 			}
