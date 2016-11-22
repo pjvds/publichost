@@ -30,6 +30,13 @@ func main() {
 			Name: "dir",
 			Action: func(ctx *cli.Context) {
 				localDir := ctx.Args().First()
+				if len(localDir) == 0 {
+					log.Fatal("local directory not specified")
+				}
+
+				if _, err := os.Stat(localDir); err != nil {
+					log.Fatal(err.Error())
+				}
 
 				log.Println("connecting to server")
 				conn, err := tls.Dial("tcp", "api.publichost.io:443", nil)
@@ -53,7 +60,8 @@ func main() {
 					log.Fatal(err.Error())
 				}
 
-				handler := handlers.CombinedLoggingHandler(os.Stdout, http.FileServer(http.Dir(localDir)))
+				fileserver := http.FileServer(http.Dir(localDir))
+				handler := handlers.CombinedLoggingHandler(os.Stdout, fileserver)
 				if err := http.Serve(tunnel, handler); err != nil {
 					log.Fatal(err.Error())
 				}
