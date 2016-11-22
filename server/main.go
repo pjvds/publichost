@@ -15,14 +15,14 @@ import (
 	"github.com/hashicorp/yamux"
 )
 
-type TunnelSession struct {
-	id            int
-	name          string
-	session       *yamux.Session
-	remoteAddress string
+type Tunnel struct {
+	id           int
+	hostname     string
+	session      *yamux.Session
+	localAddress string
 }
 
-func (this TunnelSession) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+func (this Tunnel) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	conn, err := this.session.Open()
 	if err != nil {
 		log.Println(err.Error())
@@ -56,7 +56,7 @@ func (this TunnelSession) ServeHTTP(response http.ResponseWriter, request *http.
 
 // Accepts new tunnel session in a blocking fashion. When it returns it closes the listener
 // and returns with the error why it returned.
-func Accept(accepted chan TunnelSession, publicHostname string, listener net.Listener) error {
+func Accept(accepted chan Tunnel, publicHostname string, listener net.Listener) error {
 	defer listener.Close()
 
 	for id := 0; ; id++ {
@@ -95,7 +95,7 @@ func Accept(accepted chan TunnelSession, publicHostname string, listener net.Lis
 			}
 
 			log.Printf("tunnel created %v->%v\n", publicAddress, conn.RemoteAddr())
-			accepted <- TunnelSession{
+			accepted <- Tunnel{
 				id,
 				name,
 				session,
@@ -130,11 +130,11 @@ func main() {
 			log.Fatal(err.Error())
 		}
 
-		accepted := make(chan TunnelSession)
+		accepted := make(chan Tunnel)
 		go Accept(accepted, "publichost.me", listener)
 
 		var tunnelsLock sync.RWMutex
-		tunnels := make(map[string]TunnelSession)
+		tunnels := make(map[string]Tunnel)
 
 		subdomain := regexp.MustCompile("[A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])?")
 
@@ -162,7 +162,7 @@ func main() {
 
 		for session := range accepted {
 			tunnelsLock.Lock()
-			tunnels[session.name] = session
+			tunnels[session.hostname] = session
 			tunnelsLock.Unlock()
 		}
 	}
