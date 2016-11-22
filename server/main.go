@@ -77,29 +77,25 @@ func Accept(accepted chan Tunnel, publicHostname string, listener net.Listener) 
 			publicAddress := fmt.Sprintf("http://%v", hostname)
 
 			reader := bufio.NewReader(conn)
-			_, err := http.ReadRequest(reader)
+			request, err := http.ReadRequest(reader)
 			if err != nil {
 				log.Println(err.Error())
 				return
 			}
 
-			if _, err := conn.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\nX-Publichost-Address: " + publicAddress + "\r\n\r\n")); err != nil {
-				log.Println(err.Error())
-				return
-			}
-
+			localAddress := request.Header.Get("X-Publichost-Local")
 			session, err := yamux.Client(conn, nil)
 			if err != nil {
 				log.Println(err.Error())
 				return
 			}
 
-			log.Printf("tunnel created %v->%v\n", publicAddress, conn.RemoteAddr())
+			log.Printf("tunnel created %v->%v\n", publicAddress, localAddress)
 			accepted <- Tunnel{
 				id,
-				name,
+				hostname,
 				session,
-				publicAddress,
+				localAddress,
 			}
 		}(conn, id)
 	}
