@@ -77,7 +77,19 @@ func main() {
 				if err != nil {
 					log.Fatal(err.Error())
 				}
-				if _, err = conn.Write([]byte("GET /tunnel HTTP/1.1\r\nHost: api.publichost.io\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n")); err != nil {
+
+				request, err := http.NewRequest("GET", "api.publichost.io", nil)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				request.Header.Set("X-Publichost-Local", localUrl)
+				request.Header.Set("Upgrade", "websocket")
+				request.Header.Set("Connection", "Upgrade")
+				request.Header.Set("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==")
+				request.Header.Set("Sec-WebSocket-Version", "13")
+
+				if err = request.Write(conn); err != nil {
 					log.Fatal(err.Error())
 				}
 
