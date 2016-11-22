@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"regexp"
 	"sync"
 
 	"github.com/codegangsta/cli"
@@ -132,10 +131,8 @@ func main() {
 		var tunnelsLock sync.RWMutex
 		tunnels := make(map[string]Tunnel)
 
-		subdomain := regexp.MustCompile("[A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])?")
-
 		go http.ListenAndServe(httpAddress, http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			name := subdomain.FindString(request.Host)
+			name := request.Host
 			log.Printf("handling incoming request %v->%v\n", request.Host, name)
 			if len(name) == 0 {
 				log.Println("missing tunnel name")
