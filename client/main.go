@@ -43,7 +43,15 @@ func main() {
 				}
 
 				log.Println("connecting to server")
-				conn, err := tls.Dial("tcp", "api.publichost.io:443", nil)
+
+				var conn net.Conn
+				var err error
+				if ctx.Bool("tls") {
+					conn, err = tls.Dial("tcp", ctx.String("publichost"), nil)
+				} else {
+					conn, err = net.Dial("tcp", ctx.String("publichost"))
+				}
+
 				if err != nil {
 					log.Fatal(err.Error())
 				}
