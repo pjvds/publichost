@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -11,24 +12,27 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/hashicorp/yamux"
-	"github.com/urfave/cli"
+	cli "gopkg.in/urfave/cli.v2"
 )
 
 func main() {
-	app := cli.NewApp()
+	app := &cli.App{}
 	app.Name = "publichost"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:   "publichost, p",
-			Value:  "",
-			Usage:  "the address of the publichost server",
-			EnvVar: "PUBLICHOST",
+		&cli.StringFlag{
+			Name:    "publichost",
+			Value:   "api.publichost.io",
+			Usage:   "the address of the publichost server",
+			EnvVars: []string{"PUBLICHOST"},
+		},
+		&cli.BoolFlag{
+			Name: "tls",
 		},
 	}
-	app.Commands = []cli.Command{
-		cli.Command{
+	app.Commands = []*cli.Command{
+		&cli.Command{
 			Name: "dir",
-			Action: func(ctx *cli.Context) {
+			Action: func(ctx *cli.Context) error {
 				localDir := ctx.Args().First()
 				if len(localDir) == 0 {
 					log.Fatal("local directory not specified")
@@ -65,11 +69,13 @@ func main() {
 				if err := http.Serve(tunnel, handler); err != nil {
 					log.Fatal(err.Error())
 				}
+
+				return nil
 			},
 		},
-		cli.Command{
+		&cli.Command{
 			Name: "http",
-			Action: func(ctx *cli.Context) {
+			Action: func(ctx *cli.Context) error {
 				localUrl := ctx.Args().First()
 
 				log.Println("connecting to server")
@@ -116,8 +122,10 @@ func main() {
 				if err := http.Serve(tunnel, handler); err != nil {
 					log.Fatal(err.Error())
 				}
+
+				return nil
 			},
 		},
 	}
-	app.RunAndExitOnError()
+	app.Run(os.Args)
 }
