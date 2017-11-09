@@ -5,12 +5,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+### Added
+- Support multiple hostnames. Only the subdomain is used for matching.
+- TLS flag for the client.
+
 ### Changed
+- Tunnel identifiers changed to xid's.
 - Public addresses for tunnels are now names instead of numbers.
 - Validate existance of local directory when serving it from the client.
 
 ### Removed
 - Remove deprecated -url flag.
+
+### Fixed
+- Fixed public address not returned to client.
 
 ## [0.1.1]
 ### Added
