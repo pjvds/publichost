@@ -7,15 +7,21 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"regexp"
 	"sync"
 
+	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/rs/xid"
+
 	"github.com/codegangsta/cli"
-	"github.com/dustinkirkland/golang-petname"
 	"github.com/hashicorp/yamux"
 )
 
+var nameExp = regexp.MustCompile("(?P<name>.*?)\\.")
+
 type Tunnel struct {
-	id           int
+	id           xid.ID
+	name         string
 	hostname     string
 	session      *yamux.Session
 	localAddress string
@@ -58,7 +64,9 @@ func (this Tunnel) ServeHTTP(response http.ResponseWriter, request *http.Request
 func Accept(accepted chan Tunnel, publicHostname string, listener net.Listener) error {
 	defer listener.Close()
 
-	for id := 0; ; id++ {
+	var id xid.ID
+	for {
+		id = xid.New()
 
 		conn, err := listener.Accept()
 		if err != nil {
@@ -69,7 +77,7 @@ func Accept(accepted chan Tunnel, publicHostname string, listener net.Listener) 
 		log.Printf("connection accepted %v\n", conn.RemoteAddr())
 
 		// perform handshake
-		go func(conn net.Conn, id int) {
+		go func(conn net.Conn, id xid.ID) {
 			name := petname.Generate(2, "-")
 
 			hostname := fmt.Sprintf("%v.%v", name, publicHostname)
@@ -89,9 +97,26 @@ func Accept(accepted chan Tunnel, publicHostname string, listener net.Listener) 
 				return
 			}
 
+			response := http.Response{
+				Status:     "200 OK",
+				StatusCode: 200,
+				Proto:      "HTTP/1.1",
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Header: http.Header{
+					"X-Publichost-Address": []string{hostname},
+				},
+			}
+
+			if err := response.Write(conn); err != nil {
+				log.Println(err.Error())
+				return
+			}
+
 			log.Printf("tunnel created %v->%v\n", publicAddress, localAddress)
 			accepted <- Tunnel{
 				id,
+				name,
 				hostname,
 				session,
 				localAddress,
@@ -132,7 +157,17 @@ func main() {
 		tunnels := make(map[string]Tunnel)
 
 		go http.ListenAndServe(httpAddress, http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			name := request.Host
+			matches := nameExp.FindStringSubmatch(request.Host)
+			if len(matches) <= 1 {
+				log.Println("failed to match tunnel name from host: %v", request.Host)
+				response.Write([]byte("<html><body>failed to match tunnel name</body></html>"))
+				return
+			}
+
+			log.Println(matches)
+
+			name := matches[1]
+
 			log.Printf("handling incoming request %v->%v\n", request.Host, name)
 			if len(name) == 0 {
 				log.Println("missing tunnel name")
@@ -155,7 +190,7 @@ func main() {
 
 		for session := range accepted {
 			tunnelsLock.Lock()
-			tunnels[session.hostname] = session
+			tunnels[session.name] = session
 			tunnelsLock.Unlock()
 		}
 	}
