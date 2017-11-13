@@ -21,7 +21,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:    "publichost",
-			Value:   "api.publichost.io",
+			Value:   "api.publichost.me",
 			Usage:   "the address of the publichost server",
 			EnvVars: []string{"PUBLICHOST"},
 		},
