@@ -1,0 +1,31 @@
+version: '2'
+services:
+  publichostd:
+    image: pjvds/publichostd
+    ports:
+      - "8080:8080"
+      - "5000:5000"
+  tunnel:
+    image: tecnativa/tcp-proxy
+    fip: 199.245.58.105 
+    ports:
+      - "80:80"
+    environment:
+      LISTEN: ":80"
+      TALK: "publichostd:8080"
+    links:
+      - publichostd:publichostd
+    depends_on:
+      - publichostd
+  api:
+    image: tecnativa/tcp-proxy
+    fip: 199.245.58.112
+    ports:
+      - "80:80"
+    environment:
+      LISTEN: ":80"
+      TALK: "publichostd:5000"
+    links:
+      - publichostd:publichostd
+    depends_on:
+      - publichostd
